@@ -49,8 +49,12 @@ class Settings(BaseSettings):
     AWS_REGION: str
     AWS_BUCKET_NAME: str
     
-    # OpenAI
-    OPENAI_API_KEY: str
+    # AI Configuration
+    OPENAI_API_KEY: str = ""  # Optional, can be empty
+    HUGGINGFACE_API_KEY: str = ""
+    HF_MODEL: str = ""
+    OLLAMA_MODEL: str = ""
+    USE_OLLAMA_AS_BACKUP: bool = False
     
     # Email
     SMTP_HOST: str
@@ -59,6 +63,16 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str
     SMTP_FROM_EMAIL: str
     SMTP_FROM_NAME: str
+    
+    # Admin Configuration
+    ADMIN_EMAIL: str = ""
+    ADMIN_PASSWORD: str = ""
+    
+    # Recruiter Configuration
+    RECRUITER_EMAIL: str = ""
+    RECRUITER_PASSWORD: str = ""
+    RECRUITER_NAME: str = ""
+    RECRUITER_COMPANY: str = ""
     
     # Rate Limiting
     RATE_LIMIT_ENABLED: bool = True

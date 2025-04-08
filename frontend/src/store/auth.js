@@ -16,13 +16,24 @@ const useAuthStore = create(
       login: async (email, password) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await api.post('/auth/login', { email, password });
-          const { token, user } = response.data;
-          localStorage.setItem('token', token);
-          set({ user, token, isAuthenticated: true, isLoading: false });
+          // Create form data for OAuth2PasswordRequestForm
+          const formData = new URLSearchParams();
+          formData.append('username', email);
+          formData.append('password', password);
+          
+          const response = await api.post('/auth/login', formData, {
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+          });
+          
+          const { access_token, user } = response;
+          localStorage.setItem('token', access_token);
+          set({ user, token: access_token, isAuthenticated: true, isLoading: false });
           return true;
         } catch (error) {
-          set({ error: error.response?.data?.message || 'Login failed', isLoading: false });
+          console.error('Login error:', error);
+          set({ error: error.response?.data?.detail || 'Login failed', isLoading: false });
           return false;
         }
       },
@@ -32,12 +43,13 @@ const useAuthStore = create(
         set({ isLoading: true, error: null });
         try {
           const response = await api.post('/auth/register', userData);
-          const { token, user } = response.data;
-          localStorage.setItem('token', token);
-          set({ user, token, isAuthenticated: true, isLoading: false });
+          const { access_token, user } = response;
+          localStorage.setItem('token', access_token);
+          set({ user, token: access_token, isAuthenticated: true, isLoading: false });
           return true;
         } catch (error) {
-          set({ error: error.response?.data?.message || 'Registration failed', isLoading: false });
+          console.error('Registration error:', error);
+          set({ error: error.response?.data?.detail || 'Registration failed', isLoading: false });
           return false;
         }
       },

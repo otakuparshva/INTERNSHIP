@@ -12,6 +12,7 @@ from models.user import (
 )
 from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
+from pydantic import BaseModel
 
 load_dotenv()
 
@@ -104,7 +105,7 @@ async def register(
     full_name: str = Form(...),
     email: str = Form(...),
     password: str = Form(...),
-    resume: UploadFile = File(...),
+    resume: Optional[UploadFile] = File(None),
     db: AsyncIOMotorClient = Depends(get_database)
 ):
     # Check if user already exists
@@ -114,22 +115,23 @@ async def register(
             detail="Email already registered"
         )
     
-    # Save resume file
-    resume_path = f"uploads/resumes/{email}_{resume.filename}"
-    os.makedirs("uploads/resumes", exist_ok=True)
-    with open(resume_path, "wb") as buffer:
-        content = await resume.read()
-        buffer.write(content)
-    
-    # Create user
+    # Create user object
     user = {
         "full_name": full_name,
         "email": email,
         "hashed_password": pwd_context.hash(password),
         "role": "candidate",
-        "resume_path": resume_path,
         "created_at": datetime.utcnow()
     }
+    
+    # Save resume file if provided
+    if resume:
+        resume_path = f"uploads/resumes/{email}_{resume.filename}"
+        os.makedirs("uploads/resumes", exist_ok=True)
+        with open(resume_path, "wb") as buffer:
+            content = await resume.read()
+            buffer.write(content)
+        user["resume_path"] = resume_path
     
     result = await db.users.insert_one(user)
     user["_id"] = str(result.inserted_id)
@@ -151,13 +153,29 @@ async def register(
         }
     }
 
+# Define a model for JSON login requests
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
 @router.post("/login")
 async def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
+    form_data: Optional[OAuth2PasswordRequestForm] = Depends(),
+    json_data: Optional[LoginRequest] = None,
     db: AsyncIOMotorClient = Depends(get_database)
 ):
-    user = await db.users.find_one({"email": form_data.username})
-    if not user or not pwd_context.verify(form_data.password, user["hashed_password"]):
+    # Get email from either form data or JSON
+    email = form_data.username if form_data else json_data.username
+    password = form_data.password if form_data else json_data.password
+    
+    if not email or not password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email and password are required"
+        )
+    
+    user = await db.users.find_one({"email": email})
+    if not user or not pwd_context.verify(password, user["hashed_password"]):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
