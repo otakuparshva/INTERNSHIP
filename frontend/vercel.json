@@ -5,19 +5,15 @@
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "build",
-        "buildCommand": "npm run build"
+        "distDir": "build"
       }
     }
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "https://ai-recruitment-backend.onrender.com/api/$1"
-    },
-    {
       "src": "/static/(.*)",
-      "dest": "/static/$1"
+      "headers": { "cache-control": "public, max-age=31536000, immutable" },
+      "continue": true
     },
     {
       "src": "/favicon.ico",
@@ -33,9 +29,7 @@
     }
   ],
   "env": {
-    "NODE_ENV": "production",
-    "CI": "false",
     "REACT_APP_API_URL": "https://ai-recruitment-backend.onrender.com/api",
-    "NEXT_PUBLIC_API_URL": "https://ai-recruitment-backend.onrender.com/api"
+    "NODE_ENV": "production"
   }
 } 
