@@ -18,15 +18,15 @@ const Layout = () => {
   const { user, isAuthenticated, logout } = useAuthStore();
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <Disclosure as="nav" className="bg-white shadow-sm">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <Disclosure as="nav" className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
         {({ open }) => (
           <>
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
               <div className="flex h-16 justify-between">
                 <div className="flex">
                   <div className="flex flex-shrink-0 items-center">
-                    <Link to="/" className="text-xl font-bold text-blue-600">
+                    <Link to="/" className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                       AI Recruitment
                     </Link>
                   </div>
@@ -39,7 +39,7 @@ const Layout = () => {
                           location.pathname === item.href
                             ? 'border-blue-500 text-gray-900'
                             : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700',
-                          'inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium'
+                          'inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium transition-colors duration-200'
                         )}
                       >
                         {item.name}
@@ -51,10 +51,10 @@ const Layout = () => {
                   {isAuthenticated ? (
                     <Menu as="div" className="relative ml-3">
                       <div>
-                        <Menu.Button className="flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        <Menu.Button className="flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 hover:shadow-md">
                           <span className="sr-only">Open user menu</span>
-                          <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                            <span className="text-blue-600 font-medium">
+                          <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center">
+                            <span className="text-white font-medium">
                               {user?.email?.[0]?.toUpperCase()}
                             </span>
                           </div>
@@ -75,8 +75,8 @@ const Layout = () => {
                               <Link
                                 to={`/${user?.role}`}
                                 className={classNames(
-                                  active ? 'bg-gray-100' : '',
-                                  'block px-4 py-2 text-sm text-gray-700'
+                                  active ? 'bg-gray-50' : '',
+                                  'block px-4 py-2 text-sm text-gray-700 transition-colors duration-200'
                                 )}
                               >
                                 Dashboard
@@ -88,8 +88,8 @@ const Layout = () => {
                               <button
                                 onClick={logout}
                                 className={classNames(
-                                  active ? 'bg-gray-100' : '',
-                                  'block w-full text-left px-4 py-2 text-sm text-gray-700'
+                                  active ? 'bg-gray-50' : '',
+                                  'block w-full text-left px-4 py-2 text-sm text-gray-700 transition-colors duration-200'
                                 )}
                               >
                                 Sign out
@@ -103,13 +103,13 @@ const Layout = () => {
                     <div className="space-x-4">
                       <Link
                         to="/login"
-                        className="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
+                        className="inline-flex items-center rounded-md bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:from-blue-700 hover:to-indigo-700 transition-all duration-200"
                       >
                         Sign in
                       </Link>
                       <Link
                         to="/register"
-                        className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+                        className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-all duration-200"
                       >
                         Register
                       </Link>
@@ -117,7 +117,7 @@ const Layout = () => {
                   )}
                 </div>
                 <div className="-mr-2 flex items-center sm:hidden">
-                  <Disclosure.Button className="inline-flex items-center justify-center rounded-md bg-white p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                  <Disclosure.Button className="inline-flex items-center justify-center rounded-md bg-white p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200">
                     <span className="sr-only">Open main menu</span>
                     {open ? (
                       <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
@@ -140,7 +140,7 @@ const Layout = () => {
                       location.pathname === item.href
                         ? 'bg-blue-50 border-blue-500 text-blue-700'
                         : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800',
-                      'block border-l-4 py-2 pl-3 pr-4 text-base font-medium'
+                      'block border-l-4 py-2 pl-3 pr-4 text-base font-medium transition-colors duration-200'
                     )}
                   >
                     {item.name}
@@ -151,8 +151,8 @@ const Layout = () => {
                 <div className="border-t border-gray-200 pb-3 pt-4">
                   <div className="flex items-center px-4">
                     <div className="flex-shrink-0">
-                      <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                        <span className="text-blue-600 font-medium">
+                      <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center">
+                        <span className="text-white font-medium">
                           {user?.email?.[0]?.toUpperCase()}
                         </span>
                       </div>
@@ -170,14 +170,14 @@ const Layout = () => {
                     <Disclosure.Button
                       as={Link}
                       to={`/${user?.role}`}
-                      className="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                      className="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition-colors duration-200"
                     >
                       Dashboard
                     </Disclosure.Button>
                     <Disclosure.Button
                       as="button"
                       onClick={logout}
-                      className="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                      className="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition-colors duration-200"
                     >
                       Sign out
                     </Disclosure.Button>
@@ -189,14 +189,14 @@ const Layout = () => {
                     <Disclosure.Button
                       as={Link}
                       to="/login"
-                      className="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                      className="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition-colors duration-200"
                     >
                       Sign in
                     </Disclosure.Button>
                     <Disclosure.Button
                       as={Link}
                       to="/register"
-                      className="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                      className="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition-colors duration-200"
                     >
                       Register
                     </Disclosure.Button>
@@ -208,8 +208,10 @@ const Layout = () => {
         )}
       </Disclosure>
 
-      <main>
-        <Outlet />
+      <main className="py-6">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Outlet />
+        </div>
       </main>
     </div>
   );
