@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "npm install ; npm run build",
+  "buildCommand": "npm install && npm run build",
   "outputDirectory": "build",
   "framework": "create-react-app",
   "installCommand": "npm install",
@@ -10,7 +10,7 @@
       "use": "@vercel/static-build",
       "config": {
         "distDir": "build",
-        "buildCommand": "CI=false NODE_OPTIONS='--experimental-specifier-resolution=node' npm run build"
+        "buildCommand": "CI=false npm run build"
       }
     }
   ],
@@ -29,8 +29,12 @@
       "handle": "filesystem"
     },
     {
-      "src": "/.*",
+      "src": "/(.*)",
       "dest": "/index.html"
     }
-  ]
+  ],
+  "env": {
+    "REACT_APP_API_URL": "https://ai-recruitment-backend.onrender.com",
+    "REACT_APP_PDF_WORKER_URL": "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"
+  }
 } 
