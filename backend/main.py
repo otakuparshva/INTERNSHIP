@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.openapi.utils import get_openapi
 from .core.config import settings
 from .core.logging import setup_logger, log_request
 from .core.rate_limit import default_limiter, auth_limiter, admin_limiter, api_limiter
@@ -13,12 +14,54 @@ import traceback
 # Setup logging
 logger = setup_logger("main")
 
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    
+    openapi_schema = get_openapi(
+        title="AI Recruitment System API",
+        version="1.0.0",
+        description="""
+        # AI Recruitment System API Documentation
+        
+        This API provides endpoints for managing the recruitment process, including:
+        
+        * User authentication and authorization
+        * Job posting and management
+        * Candidate applications and tracking
+        * Recruiter operations
+        * Admin dashboard functionality
+        
+        ## Authentication
+        
+        All endpoints except `/api/auth/register` and `/api/auth/login` require authentication.
+        Include the JWT token in the Authorization header:
+        
+        ```
+        Authorization: Bearer <your_token>
+        ```
+        
+        ## Rate Limiting
+        
+        The API implements rate limiting to prevent abuse:
+        * Auth endpoints: 5 requests per minute
+        * Admin endpoints: 10 requests per minute
+        * Other endpoints: 20 requests per minute
+        """,
+        routes=app.routes,
+    )
+    
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     docs_url="/api/docs" if settings.DEBUG else None,
     redoc_url="/api/redoc" if settings.DEBUG else None,
 )
+
+app.openapi = custom_openapi
 
 # Add middleware
 app.add_middleware(
