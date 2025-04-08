@@ -1,108 +1,118 @@
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from motor.motor_asyncio import AsyncIOMotorClient
-from datetime import datetime
-import logging
-import os
-from dotenv import load_dotenv
-from typing import List
+from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from .core.config import settings
+from .core.logging import setup_logger, log_request
+from .core.rate_limit import default_limiter, auth_limiter, admin_limiter, api_limiter
+from .routers import auth, admin, jobs, candidates, recruiters
+import time
+import traceback
 
-# Load environment variables
-load_dotenv()
-
-# Configure logging
-logging.basicConfig(
-    level=os.getenv("LOG_LEVEL", "INFO"),
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    filename=os.getenv("LOG_FILE", "app.log")
-)
-logger = logging.getLogger(__name__)
+# Setup logging
+logger = setup_logger("main")
 
 app = FastAPI(
-    title="AI Recruitment API",
-    description="Backend API for AI-powered recruitment platform",
-    version="1.0.0"
+    title=settings.APP_NAME,
+    version=settings.APP_VERSION,
+    docs_url="/api/docs" if settings.DEBUG else None,
+    redoc_url="/api/redoc" if settings.DEBUG else None,
 )
 
-# Configure CORS
+# Add middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "https://your-frontend-domain.com"],
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Database connection
-@app.on_event("startup")
-async def startup_db_client():
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.ALLOWED_HOSTS)
+
+# Add rate limiting middleware
+app.middleware("http")(default_limiter)
+
+# Add request logging middleware
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start_time = time.time()
     try:
-        app.mongodb_client = AsyncIOMotorClient(os.getenv("MONGODB_URL"))
-        app.mongodb = app.mongodb_client[os.getenv("MONGODB_DB_NAME")]
-        # Verify connection
-        await app.mongodb_client.admin.command('ping')
-        logger.info("Connected to MongoDB successfully.")
+        response = await call_next(request)
+        process_time = time.time() - start_time
+        response.response_time = process_time
+        log_request(request, response)
+        return response
     except Exception as e:
-        logger.error(f"Failed to connect to MongoDB: {str(e)}")
-        raise e
+        process_time = time.time() - start_time
+        log_request(request, error=e)
+        raise
 
-@app.on_event("shutdown")
-async def shutdown_db_client():
+# Add error handling middleware
+@app.middleware("http")
+async def error_handling(request: Request, call_next):
     try:
-        app.mongodb_client.close()
-        logger.info("Closed MongoDB connection.")
+        return await call_next(request)
     except Exception as e:
-        logger.error(f"Error closing MongoDB connection: {str(e)}")
+        logger.error(
+            "Unhandled exception",
+            extra={
+                "error": str(e),
+                "stack_trace": traceback.format_exc(),
+                "path": request.url.path,
+                "method": request.method,
+            }
+        )
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Internal server error"}
+        )
 
-# Custom exception handlers
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException):
-    logger.warning(f"HTTP error occurred: {exc.detail}")
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.detail}
-    )
+# Include routers with rate limiting
+app.include_router(
+    auth.router,
+    prefix="/api/auth",
+    tags=["auth"],
+    dependencies=[auth_limiter]
+)
 
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Unexpected error occurred: {str(exc)}", exc_info=True)
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "An internal server error occurred. Please try again later."}
-    )
+app.include_router(
+    admin.router,
+    prefix="/api/admin",
+    tags=["admin"],
+    dependencies=[admin_limiter]
+)
 
-# Health check endpoint with more detailed status
-@app.get("/health")
+app.include_router(
+    jobs.router,
+    prefix="/api/jobs",
+    tags=["jobs"],
+    dependencies=[api_limiter]
+)
+
+app.include_router(
+    candidates.router,
+    prefix="/api/candidates",
+    tags=["candidates"],
+    dependencies=[api_limiter]
+)
+
+app.include_router(
+    recruiters.router,
+    prefix="/api/recruiters",
+    tags=["recruiters"],
+    dependencies=[api_limiter]
+)
+
+@app.get("/api/health")
 async def health_check():
-    try:
-        # Check MongoDB connection
-        await app.mongodb_client.admin.command('ping')
-        db_status = "connected"
-    except Exception as e:
-        logger.error(f"Database health check failed: {str(e)}")
-        db_status = "disconnected"
-
-    return {
-        "status": "healthy",
-        "timestamp": datetime.utcnow(),
-        "database": db_status,
-        "version": "1.0.0"
-    }
-
-# Import and include routers
-from routers import auth, jobs, candidates, recruiter, admin, ai
-
-app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
-app.include_router(jobs.router, prefix="/api/jobs", tags=["Jobs"])
-app.include_router(candidates.router, prefix="/api/candidates", tags=["Candidates"])
-app.include_router(recruiter.router, prefix="/api/recruiter", tags=["Recruiter"])
-app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
-app.include_router(ai.router, prefix="/api/ai", tags=["AI Services"])
+    return {"status": "healthy"}
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to AI Recruitment API"}
+    return {"message": "Welcome to the AI Recruitment System API"}
 
 if __name__ == "__main__":
     import uvicorn
