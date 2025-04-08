@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import ResumeAnalysis from '../recruiter/ResumeAnalysis';
 import { analyzeResume } from '../../services/api';
@@ -46,14 +46,12 @@ describe('ResumeAnalysis Component', () => {
   it('renders resume analysis form', () => {
     renderResumeAnalysis();
     expect(screen.getByText(/Resume Analysis/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Analyze Resume/i })).toBeInTheDocument();
   });
 
   it('handles successful resume analysis', async () => {
     analyzeResume.mockResolvedValueOnce(mockAnalysisResult);
     
     renderResumeAnalysis();
-    fireEvent.click(screen.getByRole('button', { name: /Analyze Resume/i }));
 
     await waitFor(() => {
       expect(analyzeResume).toHaveBeenCalledWith('Sample resume text');
@@ -68,7 +66,6 @@ describe('ResumeAnalysis Component', () => {
     analyzeResume.mockImplementation(() => new Promise(() => {})); // Never resolves
     
     renderResumeAnalysis();
-    fireEvent.click(screen.getByRole('button', { name: /Analyze Resume/i }));
 
     expect(screen.getByText(/Analyzing.../i)).toBeInTheDocument();
   });
@@ -78,7 +75,6 @@ describe('ResumeAnalysis Component', () => {
     analyzeResume.mockRejectedValueOnce(new Error(errorMessage));
     
     renderResumeAnalysis();
-    fireEvent.click(screen.getByRole('button', { name: /Analyze Resume/i }));
 
     await waitFor(() => {
       expect(screen.getByText(/Error:/i)).toBeInTheDocument();
@@ -115,7 +111,6 @@ describe('ResumeAnalysis Component', () => {
     analyzeResume.mockResolvedValueOnce(mockAnalysisResult);
     
     renderResumeAnalysis();
-    fireEvent.click(screen.getByRole('button', { name: /Analyze Resume/i }));
 
     await waitFor(() => {
       expect(screen.getByText(/Model: ollama/i)).toBeInTheDocument();

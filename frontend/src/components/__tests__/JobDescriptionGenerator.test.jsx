@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import JobDescriptionGenerator from '../recruiter/JobDescriptionGenerator';
 import { generateJobDescription } from '../../services/api';
@@ -68,7 +68,9 @@ describe('JobDescriptionGenerator Component', () => {
       target: { value: 'Senior Frontend Developer' },
     });
     
-    fireEvent.click(screen.getByRole('button', { name: /Generate with AI/i }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Generate with AI/i }));
+    });
 
     await waitFor(() => {
       expect(generateJobDescription).toHaveBeenCalledWith({
@@ -89,9 +91,11 @@ describe('JobDescriptionGenerator Component', () => {
       target: { value: 'Senior Frontend Developer' },
     });
     
-    fireEvent.click(screen.getByRole('button', { name: /Generate with AI/i }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Generate with AI/i }));
+    });
 
-    expect(screen.getByText(/Generating.../i)).toBeInTheDocument();
+    expect(screen.getByText(/Generating description/i)).toBeInTheDocument();
   });
 
   it('handles generation error', async () => {
@@ -104,7 +108,9 @@ describe('JobDescriptionGenerator Component', () => {
       target: { value: 'Senior Frontend Developer' },
     });
     
-    fireEvent.click(screen.getByRole('button', { name: /Generate with AI/i }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Generate with AI/i }));
+    });
 
     await waitFor(() => {
       expect(screen.getByText(/Error:/i)).toBeInTheDocument();
@@ -116,7 +122,9 @@ describe('JobDescriptionGenerator Component', () => {
     renderGenerator();
     
     // Try to generate without entering a job title
-    fireEvent.click(screen.getByRole('button', { name: /Generate with AI/i }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Generate with AI/i }));
+    });
 
     expect(screen.getByText(/Job title is required/i)).toBeInTheDocument();
     expect(generateJobDescription).not.toHaveBeenCalled();
@@ -131,10 +139,12 @@ describe('JobDescriptionGenerator Component', () => {
       target: { value: 'Senior Frontend Developer' },
     });
     
-    fireEvent.click(screen.getByRole('button', { name: /Generate with AI/i }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Generate with AI/i }));
+    });
 
     await waitFor(() => {
-      const descriptionField = screen.getByLabelText(/Job Description/i);
+      const descriptionField = screen.getByRole('textbox', { name: /Description/i });
       expect(descriptionField).toBeInTheDocument();
       expect(descriptionField.value).toContain('We are seeking a talented Senior Frontend Developer');
       

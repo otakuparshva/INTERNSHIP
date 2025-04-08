@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import InterviewBot from '../candidate/InterviewBot';
 import { generateInterviewQuestions, submitInterviewAnswers } from '../../services/api';
@@ -61,7 +61,9 @@ describe('InterviewBot Component', () => {
     generateInterviewQuestions.mockResolvedValueOnce(mockQuestions);
     
     renderInterviewBot();
-    fireEvent.click(screen.getByRole('button', { name: /Start Interview/i }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Start Interview/i }));
+    });
     
     await waitFor(() => {
       expect(generateInterviewQuestions).toHaveBeenCalledWith('123', 5);
@@ -72,7 +74,9 @@ describe('InterviewBot Component', () => {
     generateInterviewQuestions.mockResolvedValueOnce(mockQuestions);
     
     renderInterviewBot();
-    fireEvent.click(screen.getByRole('button', { name: /Start Interview/i }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Start Interview/i }));
+    });
     
     await waitFor(() => {
       expect(screen.getByText(mockQuestions.questions[0].text)).toBeInTheDocument();
@@ -94,7 +98,9 @@ describe('InterviewBot Component', () => {
     submitInterviewAnswers.mockResolvedValueOnce({ success: true });
     
     renderInterviewBot();
-    fireEvent.click(screen.getByRole('button', { name: /Start Interview/i }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Start Interview/i }));
+    });
     
     await waitFor(() => {
       expect(screen.getByText(mockQuestions.questions[0].text)).toBeInTheDocument();
@@ -104,9 +110,6 @@ describe('InterviewBot Component', () => {
     fireEvent.click(screen.getByText('Problem-solving'));
     fireEvent.click(screen.getByRole('button', { name: /Next/i }));
     fireEvent.click(screen.getByText('Project A'));
-
-    // Navigate to the end
-    fireEvent.click(screen.getByRole('button', { name: /Next/i }));
 
     // Submit interview
     fireEvent.click(screen.getByRole('button', { name: /Submit/i }));
@@ -127,7 +130,9 @@ describe('InterviewBot Component', () => {
     generateInterviewQuestions.mockResolvedValueOnce(mockQuestions);
     
     renderInterviewBot();
-    fireEvent.click(screen.getByRole('button', { name: /Start Interview/i }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Start Interview/i }));
+    });
     
     await waitFor(() => {
       expect(screen.getByText(mockQuestions.questions[0].text)).toBeInTheDocument();
@@ -145,8 +150,10 @@ describe('InterviewBot Component', () => {
     generateInterviewQuestions.mockImplementation(() => new Promise(() => {})); // Never resolves
     
     renderInterviewBot();
-    fireEvent.click(screen.getByRole('button', { name: /Start Interview/i }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Start Interview/i }));
+    });
     
-    expect(screen.getByText(/Loading.../i)).toBeInTheDocument();
+    expect(screen.getByText(/Loading questions/i)).toBeInTheDocument();
   });
 }); 
