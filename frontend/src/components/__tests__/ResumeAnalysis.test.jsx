@@ -2,10 +2,10 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import ResumeAnalysis from '../recruiter/ResumeAnalysis';
-import { analyzeResume } from '@/services/api';
+import { analyzeResume } from '../../services/api';
 
 // Mock the API functions
-jest.mock('@/services/api', () => ({
+jest.mock('../../services/api', () => ({
   analyzeResume: jest.fn(),
 }));
 
