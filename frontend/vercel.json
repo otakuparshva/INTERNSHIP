@@ -6,48 +6,51 @@
       "use": "@vercel/static-build",
       "config": { 
         "distDir": "build",
-        "buildCommand": "npm run build"
+        "buildCommand": "CI=false npm run build"
       }
     }
   ],
   "routes": [
     {
-      "handle": "filesystem"
-    },
-    {
       "src": "/static/(.*)",
-      "dest": "/static/$1",
-      "headers": { "cache-control": "public, max-age=31536000, immutable" }
+      "headers": { "cache-control": "public, max-age=31536000, immutable" },
+      "continue": true
     },
     {
       "src": "/favicon.ico",
-      "dest": "/favicon.ico",
-      "headers": { "cache-control": "public, max-age=31536000, immutable" }
+      "headers": { "cache-control": "public, max-age=31536000, immutable" },
+      "continue": true
     },
     {
       "src": "/manifest.json",
-      "dest": "/manifest.json",
-      "headers": { "cache-control": "public, max-age=31536000, immutable" }
+      "headers": { "cache-control": "public, max-age=31536000, immutable" },
+      "continue": true
     },
     {
       "src": "/logo192.png",
-      "dest": "/logo192.png",
-      "headers": { "cache-control": "public, max-age=31536000, immutable" }
+      "headers": { "cache-control": "public, max-age=31536000, immutable" },
+      "continue": true
     },
     {
       "src": "/logo512.png",
-      "dest": "/logo512.png",
-      "headers": { "cache-control": "public, max-age=31536000, immutable" }
+      "headers": { "cache-control": "public, max-age=31536000, immutable" },
+      "continue": true
     },
     {
       "src": "/robots.txt",
-      "dest": "/robots.txt",
-      "headers": { "cache-control": "public, max-age=31536000, immutable" }
+      "headers": { "cache-control": "public, max-age=31536000, immutable" },
+      "continue": true
+    },
+    {
+      "handle": "filesystem"
     },
     {
       "src": "/(.*)",
       "dest": "/index.html",
-      "status": 200
+      "status": 200,
+      "headers": {
+        "cache-control": "public, max-age=0, must-revalidate"
+      }
     }
   ],
   "env": {
