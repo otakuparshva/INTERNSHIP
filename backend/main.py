@@ -7,7 +7,7 @@ from fastapi.openapi.utils import get_openapi
 from core.config import settings
 from core.logging import setup_logger, log_request
 from core.rate_limit import default_limiter, auth_limiter, admin_limiter, api_limiter
-from routers import auth, admin, jobs, candidates, recruiters, ai
+from routers import auth, admin, jobs, candidates, recruiters, ai, forms
 import time
 import traceback
 
@@ -153,6 +153,13 @@ app.include_router(
     ai.router,
     prefix="/api/ai",
     tags=["ai"],
+    dependencies=[api_limiter]
+)
+
+app.include_router(
+    forms.router,
+    prefix="/api/forms",
+    tags=["forms"],
     dependencies=[api_limiter]
 )
 
