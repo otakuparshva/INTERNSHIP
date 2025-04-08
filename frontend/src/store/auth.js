@@ -1,13 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import axios from '@/api/axios';
+import axios from '../api/axios';
 import { jwtDecode } from 'jwt-decode';
 
 const useAuthStore = create(
   persist(
     (set, get) => ({
-      token: null,
       user: null,
+      token: null,
       isAuthenticated: false,
       isLoading: false,
       error: null,
@@ -16,33 +16,12 @@ const useAuthStore = create(
       login: async (email, password) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await axios.post('/api/auth/token', {
-            username: email,
-            password,
-          });
-
-          const { access_token } = response.data;
-          const decoded = jwtDecode(access_token);
-
-          set({
-            token: access_token,
-            user: {
-              email: decoded.sub,
-              role: decoded.role,
-            },
-            isAuthenticated: true,
-            isLoading: false,
-          });
-
-          // Set token in axios headers
-          axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
-
+          const response = await axios.post('/auth/login', { email, password });
+          const { user, token } = response.data;
+          set({ user, token, isAuthenticated: true, isLoading: false });
           return true;
         } catch (error) {
-          set({
-            error: error.response?.data?.detail || 'Login failed',
-            isLoading: false,
-          });
+          set({ error: error.response?.data?.message || 'Login failed', isLoading: false });
           return false;
         }
       },
@@ -51,29 +30,19 @@ const useAuthStore = create(
       register: async (userData) => {
         set({ isLoading: true, error: null });
         try {
-          await axios.post('/api/auth/register', userData);
-          set({ isLoading: false });
+          const response = await axios.post('/auth/register', userData);
+          const { user, token } = response.data;
+          set({ user, token, isAuthenticated: true, isLoading: false });
           return true;
         } catch (error) {
-          set({
-            error: error.response?.data?.detail || 'Registration failed',
-            isLoading: false,
-          });
+          set({ error: error.response?.data?.message || 'Registration failed', isLoading: false });
           return false;
         }
       },
 
       // Logout
       logout: () => {
-        // Remove token from axios headers
-        delete axios.defaults.headers.common['Authorization'];
-
-        set({
-          token: null,
-          user: null,
-          isAuthenticated: false,
-          error: null,
-        });
+        set({ user: null, token: null, isAuthenticated: false, error: null });
       },
 
       // Check if token is expired
@@ -158,9 +127,8 @@ const useAuthStore = create(
     }),
     {
       name: 'auth-storage',
-      getStorage: () => localStorage,
     }
   )
 );
 
-export { useAuthStore }; 
+export default useAuthStore; 

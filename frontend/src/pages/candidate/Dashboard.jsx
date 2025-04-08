@@ -1,88 +1,53 @@
-import { useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
-import { Tab } from '@headlessui/react';
-import {
-  BriefcaseIcon,
-  DocumentTextIcon,
-  ChatBubbleLeftRightIcon,
-} from '@heroicons/react/24/outline';
-import JobSearch from '@/components/candidate/JobSearch';
-import Applications from '@/components/candidate/Applications';
-import InterviewBot from '@/components/candidate/InterviewBot';
+import useAuthStore from '../../store/auth';
 
-function classNames(...classes) {
-  return classes.filter(Boolean).join(' ');
-}
-
-export default function CandidateDashboard() {
-  const [selectedTab, setSelectedTab] = useState(0);
-
-  const tabs = [
-    {
-      name: 'Find Jobs',
-      icon: BriefcaseIcon,
-      component: JobSearch,
-    },
-    {
-      name: 'My Applications',
-      icon: DocumentTextIcon,
-      component: Applications,
-    },
-    {
-      name: 'Interview',
-      icon: ChatBubbleLeftRightIcon,
-      component: InterviewBot,
-    },
-  ];
+const CandidateDashboard = () => {
+  const { user } = useAuthStore();
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow">
-          <Tab.Group selectedIndex={selectedTab} onChange={setSelectedTab}>
-            <Tab.List className="flex space-x-1 rounded-t-lg bg-gray-100 p-1">
-              {tabs.map((tab) => (
-                <Tab
-                  key={tab.name}
-                  className={({ selected }) =>
-                    classNames(
-                      'w-full rounded-md py-2.5 text-sm font-medium leading-5',
-                      'ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2',
-                      selected
-                        ? 'bg-white shadow text-blue-600'
-                        : 'text-gray-600 hover:bg-white/[0.12] hover:text-blue-600'
-                    )
-                  }
-                >
-                  <div className="flex items-center justify-center space-x-2">
-                    <tab.icon className="h-5 w-5" />
-                    <span>{tab.name}</span>
-                  </div>
-                </Tab>
-              ))}
-            </Tab.List>
-            <Tab.Panels className="mt-2">
-              {tabs.map((tab, idx) => (
-                <Tab.Panel
-                  key={idx}
-                  className={classNames(
-                    'rounded-xl bg-white p-3',
-                    'ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2'
-                  )}
-                >
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <tab.component />
-                  </motion.div>
-                </Tab.Panel>
-              ))}
-            </Tab.Panels>
-          </Tab.Group>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="container mx-auto px-4 py-8"
+    >
+      <h1 className="text-3xl font-bold mb-8">Welcome, {user?.full_name || 'Candidate'}</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Applications Overview */}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-xl font-semibold mb-4">Applications Overview</h2>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span>Total Applications</span>
+              <span className="font-bold">0</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span>Under Review</span>
+              <span className="font-bold">0</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span>Interviews Scheduled</span>
+              <span className="font-bold">0</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Applications */}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-xl font-semibold mb-4">Recent Applications</h2>
+          <p className="text-gray-500">No recent applications</p>
+        </div>
+
+        {/* Upcoming Interviews */}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-xl font-semibold mb-4">Upcoming Interviews</h2>
+          <p className="text-gray-500">No upcoming interviews</p>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
-} 
+};
+
+export default CandidateDashboard; 

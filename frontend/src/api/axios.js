@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 
 // Create axios instance
 const instance = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api',
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8000/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -12,22 +12,13 @@ const instance = axios.create({
 // Request interceptor
 instance.interceptors.request.use(
   (config) => {
-    // Get token from localStorage
-    const token = localStorage.getItem('auth-storage');
+    const token = localStorage.getItem('auth-storage') 
+      ? JSON.parse(localStorage.getItem('auth-storage')).state.token 
+      : null;
     
-    // If token exists, parse it and add to headers
     if (token) {
-      try {
-        const { state } = JSON.parse(token);
-        if (state.token) {
-          config.headers.Authorization = `Bearer ${state.token}`;
-        }
-      } catch (error) {
-        console.error('Error parsing auth token:', error);
-        localStorage.removeItem('auth-storage');
-      }
+      config.headers.Authorization = `Bearer ${token}`;
     }
-
     return config;
   },
   (error) => {

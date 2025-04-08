@@ -1,6 +1,7 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
 import { QueryClient, QueryClientProvider } from 'react-query';
+import { Toaster } from 'react-hot-toast';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -8,11 +9,15 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import CandidateDashboard from './pages/CandidateDashboard';
-import RecruiterDashboard from './pages/RecruiterDashboard';
-import AdminDashboard from './pages/AdminDashboard';
-import JobPosting from './pages/JobPosting';
 import JobListings from './pages/JobListings';
+import JobPosting from './pages/JobPosting';
+import Contact from './pages/Contact';
+import About from './pages/About';
+
+// Role-specific pages
+import CandidateDashboard from './pages/candidate/Dashboard';
+import RecruiterDashboard from './pages/recruiter/Dashboard';
+import AdminDashboard from './pages/admin/Dashboard';
 import InterviewBot from './pages/InterviewBot';
 import ResumeViewer from './pages/ResumeViewer';
 import NotFound from './pages/NotFound';
