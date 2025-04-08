@@ -38,13 +38,6 @@
   ],
   "env": {
     "REACT_APP_API_URL": "/api",
-    "REACT_APP_PDF_WORKER_URL": "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",
-    "HUGGINGFACE_API_KEY": "@huggingface_api_key",
-    "MONGODB_URI": "@mongodb_uri",
-    "JWT_SECRET": "@jwt_secret",
-    "AWS_ACCESS_KEY_ID": "@aws_access_key_id",
-    "AWS_SECRET_ACCESS_KEY": "@aws_secret_access_key",
-    "AWS_REGION": "@aws_region",
-    "AWS_BUCKET_NAME": "@aws_bucket_name"
+    "REACT_APP_PDF_WORKER_URL": "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"
   }
 } 
