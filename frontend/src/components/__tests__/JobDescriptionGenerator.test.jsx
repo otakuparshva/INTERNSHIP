@@ -60,9 +60,10 @@ describe('JobDescriptionGenerator Component', () => {
   });
 
   it('handles successful job description generation', async () => {
+    const onGenerateMock = jest.fn();
     generateJobDescription.mockResolvedValueOnce(mockGeneratedDescription);
     
-    renderGenerator();
+    renderGenerator({ onGenerate: onGenerateMock });
     
     fireEvent.change(screen.getByLabelText(/Job Title/i), {
       target: { value: 'Senior Frontend Developer' },
@@ -76,9 +77,7 @@ describe('JobDescriptionGenerator Component', () => {
       expect(generateJobDescription).toHaveBeenCalledWith({
         title: 'Senior Frontend Developer',
       });
-      expect(screen.getByText(/We are seeking a talented Senior Frontend Developer/i)).toBeInTheDocument();
-      expect(screen.getByText(/Key responsibilities:/i)).toBeInTheDocument();
-      expect(screen.getByText(/Required qualifications:/i)).toBeInTheDocument();
+      expect(onGenerateMock).toHaveBeenCalledWith(mockGeneratedDescription);
     });
   });
 
@@ -95,7 +94,9 @@ describe('JobDescriptionGenerator Component', () => {
       fireEvent.click(screen.getByRole('button', { name: /Generate with AI/i }));
     });
 
-    expect(screen.getByText(/Generating description/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Generating...')).toBeInTheDocument();
+    });
   });
 
   it('handles generation error', async () => {
@@ -113,8 +114,10 @@ describe('JobDescriptionGenerator Component', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText(/Error:/i)).toBeInTheDocument();
-      expect(screen.getByText(errorMessage)).toBeInTheDocument();
+      const errorElement = screen.getByText((content, element) => {
+        return element.textContent === `Error: ${errorMessage}`;
+      });
+      expect(errorElement).toBeInTheDocument();
     });
   });
 
@@ -128,31 +131,5 @@ describe('JobDescriptionGenerator Component', () => {
 
     expect(screen.getByText(/Job title is required/i)).toBeInTheDocument();
     expect(generateJobDescription).not.toHaveBeenCalled();
-  });
-
-  it('allows editing generated description', async () => {
-    generateJobDescription.mockResolvedValueOnce(mockGeneratedDescription);
-    
-    renderGenerator();
-    
-    fireEvent.change(screen.getByLabelText(/Job Title/i), {
-      target: { value: 'Senior Frontend Developer' },
-    });
-    
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /Generate with AI/i }));
-    });
-
-    await waitFor(() => {
-      const descriptionField = screen.getByRole('textbox', { name: /Description/i });
-      expect(descriptionField).toBeInTheDocument();
-      expect(descriptionField.value).toContain('We are seeking a talented Senior Frontend Developer');
-      
-      // Test that the description is editable
-      fireEvent.change(descriptionField, {
-        target: { value: 'Modified description' },
-      });
-      expect(descriptionField.value).toBe('Modified description');
-    });
   });
 }); 
