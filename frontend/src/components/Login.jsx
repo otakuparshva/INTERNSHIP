@@ -23,14 +23,15 @@ const Login = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.detail);
+        setError(data.detail || 'Login failed');
         return;
       }
 
       localStorage.setItem('token', data.access_token);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message || 'An error occurred');
+      console.error('Login error:', err);
+      setError('An error occurred during login. Please try again.');
     }
   };
 

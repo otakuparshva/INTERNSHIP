@@ -67,7 +67,9 @@ describe('ResumeAnalysis Component', () => {
     
     renderResumeAnalysis();
 
-    expect(screen.getByText(/Analyzing.../i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Analyzing...')).toBeInTheDocument();
+    });
   });
 
   it('handles analysis error', async () => {
@@ -77,8 +79,10 @@ describe('ResumeAnalysis Component', () => {
     renderResumeAnalysis();
 
     await waitFor(() => {
-      expect(screen.getByText(/Error:/i)).toBeInTheDocument();
-      expect(screen.getByText(errorMessage)).toBeInTheDocument();
+      const errorElement = screen.getByText((content, element) => {
+        return element.textContent === `Error: ${errorMessage}`;
+      });
+      expect(errorElement).toBeInTheDocument();
     });
   });
 

@@ -134,4 +134,6 @@ const useAuthStore = create(
   )
 );
 
+// Export as both default and named export
+export { useAuthStore };
 export default useAuthStore; 
