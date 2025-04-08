@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 
 // Create axios instance
 const instance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api',
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8000/api',
   headers: {
     'Content-Type': 'application/json',
   },
