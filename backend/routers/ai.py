@@ -107,7 +107,7 @@ def calculate_resume_match_score(resume_text: str, job_description: str) -> floa
 async def generate_job_description(
     title: str,
     job_type: str,
-    db: AsyncIOMotorClient = Depends(get_db)
+    db: AsyncIOMotorClient = Depends(get_db) # type: ignore
 ):
     try:
         prompt = f"Generate a professional job description and requirements for a {job_type} position as {title}. Include key responsibilities, required skills, and qualifications."
@@ -158,7 +158,7 @@ async def generate_job_description(
 async def analyze_resume(
     resume: UploadFile = File(...),
     job_description: Optional[str] = None,
-    db: AsyncIOMotorClient = Depends(get_db)
+    db: AsyncIOMotorClient = Depends(get_db) # type: ignore
 ):
     try:
         # Save resume temporarily
@@ -228,7 +228,7 @@ async def generate_interview_questions(
     job_description: str,
     resume_text: Optional[str] = None,
     num_questions: int = 5,
-    db: AsyncIOMotorClient = Depends(get_db)
+    db: AsyncIOMotorClient = Depends(get_db) # type: ignore
 ):
     try:
         prompt = f"Generate {num_questions} multiple choice interview questions based on this job description: {job_description}"
