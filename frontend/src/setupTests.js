@@ -2,11 +2,12 @@ import '@testing-library/jest-dom';
 import { server } from './mocks/server';
 
 // Mock fetch
-global.fetch = jest.fn();
+const mockFetch = jest.fn();
+global.fetch = mockFetch;
 
 beforeAll(() => server.listen());
 afterEach(() => {
   server.resetHandlers();
-  global.fetch.mockClear();
+  mockFetch.mockReset();
 });
 afterAll(() => server.close()); 

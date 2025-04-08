@@ -1,24 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { rest } from 'msw';
-import { setupServer } from 'msw/node';
 import Login from '../Login';
-
-const server = setupServer(
-  rest.post('/api/auth/login', (req, res, ctx) => {
-    return res(
-      ctx.json({
-        access_token: 'fake-token',
-        token_type: 'bearer'
-      })
-    );
-  })
-);
-
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
 
 describe('Login Component', () => {
   const renderLogin = () => {
@@ -37,6 +20,13 @@ describe('Login Component', () => {
   });
 
   test('handles successful login', async () => {
+    global.fetch.mockImplementationOnce(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ access_token: 'fake-token', token_type: 'bearer' }),
+      })
+    );
+
     renderLogin();
     
     fireEvent.change(screen.getByLabelText(/email/i), {
@@ -54,12 +44,10 @@ describe('Login Component', () => {
   });
 
   test('handles login error', async () => {
-    server.use(
-      rest.post('/api/auth/login', (req, res, ctx) => {
-        return res(
-          ctx.status(401),
-          ctx.json({ detail: 'Invalid credentials' })
-        );
+    global.fetch.mockImplementationOnce(() =>
+      Promise.resolve({
+        ok: false,
+        json: () => Promise.resolve({ detail: 'Invalid credentials' }),
       })
     );
 
