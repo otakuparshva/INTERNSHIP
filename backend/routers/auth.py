@@ -13,10 +13,13 @@ from models.user import (
 from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
 from pydantic import BaseModel
+from core.config import settings
+from core.logging import setup_logger
 
 load_dotenv()
 
 router = APIRouter()
+logger = setup_logger("auth")
 
 # Security configuration
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

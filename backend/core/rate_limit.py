@@ -3,8 +3,8 @@ from fastapi.responses import JSONResponse
 from typing import Optional, Callable
 import time
 import redis
-from ..core.config import settings
-from .logging import setup_logger
+from core.config import settings
+from core.logging import setup_logger
 
 logger = setup_logger("rate_limit")
 

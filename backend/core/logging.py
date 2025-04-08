@@ -5,7 +5,7 @@ from typing import Any, Dict
 from pathlib import Path
 import traceback
 from fastapi import Request
-from ..core.config import settings
+from core.config import settings
 
 def setup_logger(name: str) -> logging.Logger:
     """Setup a logger with proper formatting and handlers"""

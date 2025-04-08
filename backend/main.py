@@ -4,6 +4,13 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.openapi.utils import get_openapi
+import sys
+from pathlib import Path
+
+# Add the backend directory to Python path
+backend_dir = Path(__file__).parent
+sys.path.append(str(backend_dir))
+
 from core.config import settings
 from core.logging import setup_logger, log_request
 from core.rate_limit import default_limiter, auth_limiter, admin_limiter, api_limiter
