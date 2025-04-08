@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "buildCommand": "npm install && npm run build",
-  "outputDirectory": "build",
+  "buildCommand": "npm run vercel-build",
+  "outputDirectory": "frontend/build",
   "framework": "create-react-app",
   "installCommand": "npm install",
   "builds": [
@@ -9,8 +9,8 @@
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "build",
-        "buildCommand": "CI=false npm run build"
+        "distDir": "frontend/build",
+        "buildCommand": "npm run vercel-build"
       }
     }
   ],
