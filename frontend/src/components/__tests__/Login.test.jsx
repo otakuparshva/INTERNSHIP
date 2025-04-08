@@ -1,10 +1,16 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import Login from '../Login';
 
+// Mock fetch globally
+global.fetch = jest.fn();
+
 describe('Login Component', () => {
-  const mockFetch = global.fetch;
+  beforeEach(() => {
+    // Clear all mocks before each test
+    jest.clearAllMocks();
+  });
 
   const renderLogin = () => {
     render(
@@ -14,54 +20,64 @@ describe('Login Component', () => {
     );
   };
 
-  test('renders login form', () => {
+  it('renders login form', () => {
     renderLogin();
-    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/email address/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/password/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument();
   });
 
-  test('handles successful login', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ access_token: 'fake-token', token_type: 'bearer' }),
-    });
+  it('handles successful login', async () => {
+    // Mock successful response
+    global.fetch.mockImplementationOnce(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ access_token: 'fake-token' }),
+      })
+    );
 
     renderLogin();
     
-    fireEvent.change(screen.getByLabelText(/email/i), {
+    fireEvent.change(screen.getByPlaceholderText(/email address/i), {
       target: { value: 'test@example.com' },
     });
-    fireEvent.change(screen.getByLabelText(/password/i), {
+    fireEvent.change(screen.getByPlaceholderText(/password/i), {
       target: { value: 'password123' },
     });
-    
     fireEvent.click(screen.getByRole('button', { name: /login/i }));
-    
-    await waitFor(() => {
-      expect(screen.queryByText(/error/i)).not.toBeInTheDocument();
+
+    expect(global.fetch).toHaveBeenCalledWith('/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: 'test@example.com',
+        password: 'password123',
+      }),
     });
   });
 
-  test('handles login error', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      json: () => Promise.resolve({ detail: 'Invalid credentials' }),
-    });
+  it('handles login error', async () => {
+    // Mock error response
+    global.fetch.mockImplementationOnce(() =>
+      Promise.resolve({
+        ok: false,
+        json: () => Promise.resolve({ detail: 'Invalid credentials' }),
+      })
+    );
 
     renderLogin();
     
-    fireEvent.change(screen.getByLabelText(/email/i), {
+    fireEvent.change(screen.getByPlaceholderText(/email address/i), {
       target: { value: 'wrong@example.com' },
     });
-    fireEvent.change(screen.getByLabelText(/password/i), {
+    fireEvent.change(screen.getByPlaceholderText(/password/i), {
       target: { value: 'wrongpass' },
     });
-    
     fireEvent.click(screen.getByRole('button', { name: /login/i }));
     
-    await waitFor(() => {
-      expect(screen.getByText(/invalid credentials/i)).toBeInTheDocument();
-    });
+    const errorMessage = await screen.findByText('Invalid credentials');
+    expect(errorMessage).toBeInTheDocument();
   });
 }); 
