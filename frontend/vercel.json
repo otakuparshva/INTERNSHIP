@@ -21,12 +21,24 @@
       "dest": "/manifest.json"
     },
     {
+      "src": "/logo192.png",
+      "dest": "/logo192.png"
+    },
+    {
+      "src": "/logo512.png",
+      "dest": "/logo512.png"
+    },
+    {
+      "src": "/robots.txt",
+      "dest": "/robots.txt"
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html"
     }
   ],
   "env": {
-    "REACT_APP_API_URL": "http://localhost:8000/api",
+    "REACT_APP_API_URL": "https://recruitment-app-backend.onrender.com",
     "REACT_APP_AWS_REGION": "ap-south-1",
     "REACT_APP_AWS_BUCKET_NAME": "resume.selector.bucket",
     "REACT_APP_NAME": "AI Recruitment System",
