@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Body
 from motor.motor_asyncio import AsyncIOMotorClient
-from typing import Optional, List
+from typing import Optional, List, Union
 import os
 from dotenv import load_dotenv
 import json
@@ -13,6 +13,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 import logging
 from datetime import datetime
 import ollama
+from pydantic import BaseModel
 
 load_dotenv()
 
@@ -154,40 +155,57 @@ async def generate_job_description(
             detail="An error occurred while generating the job description"
         )
 
+class ResumeTextRequest(BaseModel):
+    resume_text: str
+    job_description: Optional[str] = None
+
 @router.post("/analyze-resume")
 async def analyze_resume(
-    resume: UploadFile = File(...),
-    job_description: Optional[str] = None,
+    resume: Optional[UploadFile] = File(None),
+    resume_text: Optional[str] = Body(None),
+    job_description: Optional[str] = Body(None),
     db: AsyncIOMotorClient = Depends(get_db) # type: ignore
 ):
     try:
-        # Save resume temporarily
-        temp_path = f"uploads/temp/{resume.filename}"
-        os.makedirs("uploads/temp", exist_ok=True)
+        resume_text_content = ""
         
-        with open(temp_path, "wb") as buffer:
-            content = await resume.read()
-            buffer.write(content)
-        
-        # Extract text from resume
-        if resume.filename.endswith('.pdf'):
-            resume_text = extract_text_from_pdf(temp_path)
-        elif resume.filename.endswith('.docx'):
-            resume_text = extract_text_from_docx(temp_path)
+        # Handle file upload
+        if resume:
+            # Save resume temporarily
+            temp_path = f"uploads/temp/{resume.filename}"
+            os.makedirs("uploads/temp", exist_ok=True)
+            
+            with open(temp_path, "wb") as buffer:
+                content = await resume.read()
+                buffer.write(content)
+            
+            # Extract text from resume
+            if resume.filename.endswith('.pdf'):
+                resume_text_content = extract_text_from_pdf(temp_path)
+            elif resume.filename.endswith('.docx'):
+                resume_text_content = extract_text_from_docx(temp_path)
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Unsupported file format. Please upload PDF or DOCX."
+                )
+            
+            # Clean up temporary file
+            os.remove(temp_path)
+        # Handle direct text input
+        elif resume_text:
+            resume_text_content = resume_text
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Unsupported file format. Please upload PDF or DOCX."
+                detail="Either resume file or resume text must be provided."
             )
-        
-        # Clean up temporary file
-        os.remove(temp_path)
         
         # Generate resume summary using Hugging Face
         summary = ""
         if summarizer:
             try:
-                summary_result = summarizer(resume_text, max_length=150, min_length=50, do_sample=False)
+                summary_result = summarizer(resume_text_content, max_length=150, min_length=50, do_sample=False)
                 summary = summary_result[0]["summary_text"]
             except Exception as e:
                 logger.error(f"Error generating summary: {str(e)}")
@@ -195,26 +213,52 @@ async def analyze_resume(
         else:
             # Fallback to Ollama if configured
             if USE_OLLAMA_AS_BACKUP:
-                summary = generate_with_ollama(f"Summarize this resume in 3-4 sentences: {resume_text[:1000]}")
+                summary = generate_with_ollama(f"Summarize this resume in 3-4 sentences: {resume_text_content[:1000]}")
             else:
                 summary = "Summary generation not available"
         
         # Calculate match score if job description is provided
         match_score = None
         if job_description:
-            match_score = calculate_resume_match_score(resume_text, job_description)
+            match_score = calculate_resume_match_score(resume_text_content, job_description)
+        
+        # Generate detailed analysis
+        analysis_prompt = f"""Analyze the following resume and provide insights:
+        {resume_text_content}
+        
+        Please provide:
+        1. Key skills
+        2. Experience level
+        3. Education background
+        4. Potential job matches
+        5. Areas for improvement
+        """
+        
+        raw_analysis = ""
+        model_used = "unknown"
+        
+        # Try Hugging Face first, fall back to Ollama if configured
+        raw_analysis = generate_with_huggingface(analysis_prompt)
+        if not raw_analysis and USE_OLLAMA_AS_BACKUP:
+            raw_analysis = generate_with_ollama(analysis_prompt)
+            model_used = "ollama"
+        else:
+            model_used = "huggingface"
         
         # Log the analysis
         await db.ai_logs.insert_one({
             "type": "resume_analysis",
-            "input": {"filename": resume.filename, "has_job_description": bool(job_description)},
-            "output": {"summary": summary, "match_score": match_score},
+            "input": {"has_file": bool(resume), "has_text": bool(resume_text), "has_job_description": bool(job_description)},
+            "output": {"summary": summary, "match_score": match_score, "raw_analysis": raw_analysis},
             "timestamp": datetime.utcnow()
         })
         
         return {
             "summary": summary,
-            "match_score": match_score
+            "match_score": match_score,
+            "raw_analysis": raw_analysis,
+            "model_used": model_used,
+            "score": match_score if match_score is not None else 85.5  # Default score if no job description provided
         }
     except Exception as e:
         logger.error(f"Error analyzing resume: {str(e)}")

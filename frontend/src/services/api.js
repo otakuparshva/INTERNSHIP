@@ -28,7 +28,17 @@ export const getRecruiterInterviews = () => api.get('/recruiter/interviews');
 
 // AI APIs
 export const generateJobDescription = (data) => api.post('/ai/generate-job-description', data);
-export const analyzeResume = (resumeText) => api.post('/ai/analyze-resume', { resume_text: resumeText });
+export const analyzeResume = (resumeText) => {
+  // Create a FormData object with the resume text
+  const formData = new FormData();
+  const blob = new Blob([resumeText], { type: 'text/plain' });
+  formData.append('resume', blob, 'resume.txt');
+  return api.post('/ai/analyze-resume', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};
 export const generateInterviewQuestions = (jobId, numQuestions) => 
   api.post('/ai/generate-interview-questions', { job_id: jobId, num_questions: numQuestions });
 

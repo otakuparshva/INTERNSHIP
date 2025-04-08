@@ -4,10 +4,10 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.openapi.utils import get_openapi
-from .core.config import settings
-from .core.logging import setup_logger, log_request
-from .core.rate_limit import default_limiter, auth_limiter, admin_limiter, api_limiter
-from .routers import auth, admin, jobs, candidates, recruiters
+from core.config import settings
+from core.logging import setup_logger, log_request
+from core.rate_limit import default_limiter, auth_limiter, admin_limiter, api_limiter
+from routers import auth, admin, jobs, candidates, recruiters, ai
 import time
 import traceback
 
@@ -146,6 +146,13 @@ app.include_router(
     recruiters.router,
     prefix="/api/recruiters",
     tags=["recruiters"],
+    dependencies=[api_limiter]
+)
+
+app.include_router(
+    ai.router,
+    prefix="/api/ai",
+    tags=["ai"],
     dependencies=[api_limiter]
 )
 

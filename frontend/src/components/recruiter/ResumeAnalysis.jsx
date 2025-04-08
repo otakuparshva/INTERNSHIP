@@ -13,7 +13,8 @@ export default function ResumeAnalysis({ resumeText }) {
       setError('');
     },
     onError: (err) => {
-      setError(err.message || 'Failed to analyze resume');
+      console.error('Analysis error:', err);
+      setError(err.response?.data?.detail || err.message || 'Failed to analyze resume');
     },
   });
 
@@ -55,7 +56,15 @@ export default function ResumeAnalysis({ resumeText }) {
             </div>
           </div>
 
+          {analysis.summary && (
+            <div className="bg-blue-50 p-4 rounded-md">
+              <h3 className="text-md font-medium text-blue-800 mb-2">Summary</h3>
+              <p className="text-blue-700">{analysis.summary}</p>
+            </div>
+          )}
+
           <div className="prose max-w-none">
+            <h3 className="text-md font-medium text-gray-800 mb-2">Detailed Analysis</h3>
             <div className="whitespace-pre-wrap text-gray-700">
               {analysis.raw_analysis}
             </div>
