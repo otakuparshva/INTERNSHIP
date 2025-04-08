@@ -20,24 +20,18 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
-    title="AI Recruitment System",
-    description="An AI-powered recruitment platform",
+    title="AI Recruitment API",
+    description="Backend API for AI-powered recruitment platform",
     version="1.0.0"
 )
 
-# Get allowed origins from environment variable
-ALLOWED_ORIGINS: List[str] = os.getenv("CORS_ORIGINS", "").split(",")
-if not ALLOWED_ORIGINS or ALLOWED_ORIGINS[0] == "":
-    ALLOWED_ORIGINS = ["http://localhost:3000"]  # Default to localhost in development
-
-# CORS middleware configuration with more secure settings
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origins=["http://localhost:3000", "https://your-frontend-domain.com"],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allow_headers=["Content-Type", "Authorization", "Accept"],
-    max_age=3600,  # Cache preflight requests for 1 hour
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Database connection
@@ -105,6 +99,10 @@ app.include_router(candidates.router, prefix="/api/candidates", tags=["Candidate
 app.include_router(recruiter.router, prefix="/api/recruiter", tags=["Recruiter"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 app.include_router(ai.router, prefix="/api/ai", tags=["AI Services"])
+
+@app.get("/")
+async def root():
+    return {"message": "Welcome to AI Recruitment API"}
 
 if __name__ == "__main__":
     import uvicorn

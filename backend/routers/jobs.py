@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from typing import List, Optional
 from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
@@ -64,142 +64,111 @@ async def generate_jd_with_ai(title: str, requirements: List[str]) -> str:
     
     return ""
 
-@router.post("/", response_model=JobResponse)
-async def create_job(
-    job: JobCreate,
-    current_user: UserResponse = Depends(get_current_recruiter),
-    db: AsyncIOMotorClient = Depends(get_database) # type: ignore
-):
-    # Generate AI description
-    ai_description = await generate_jd_with_ai(job.title, job.requirements)
-    
-    # Create job document
-    job_dict = job.dict()
-    job_dict["recruiter_id"] = current_user.id
-    job_dict["created_at"] = datetime.utcnow()
-    job_dict["updated_at"] = datetime.utcnow()
-    job_dict["ai_generated_description"] = ai_description
-    
-    result = await db.jobs.insert_one(job_dict)
-    job_dict["_id"] = result.inserted_id
-    
-    return JobResponse(**job_dict)
+async def get_db():
+    client = AsyncIOMotorClient(os.getenv("MONGODB_URL"))
+    db = client[os.getenv("MONGODB_DB_NAME")]
+    try:
+        yield db
+    finally:
+        client.close()
 
-@router.get("/", response_model=List[JobResponse])
-async def list_jobs(
-    search: Optional[JobSearch] = None,
-    current_user: UserResponse = Depends(get_current_user),
-    db: AsyncIOMotorClient = Depends(get_database) # type: ignore
+@router.get("/")
+async def get_jobs(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(10, ge=1, le=100),
+    search: Optional[str] = None,
+    job_type: Optional[str] = None,
+    db: AsyncIOMotorClient = Depends(get_db)
 ):
+    # Build query
     query = {}
-    
     if search:
-        if search.query:
-            query["$or"] = [
-                {"title": {"$regex": search.query, "$options": "i"}},
-                {"description": {"$regex": search.query, "$options": "i"}}
-            ]
-        if search.status:
-            query["status"] = search.status
-        if search.recruiter_id:
-            query["recruiter_id"] = search.recruiter_id
+        query["$or"] = [
+            {"title": {"$regex": search, "$options": "i"}},
+            {"company": {"$regex": search, "$options": "i"}},
+            {"description": {"$regex": search, "$options": "i"}}
+        ]
+    if job_type:
+        query["type"] = job_type
     
-    # If user is a candidate, only show open jobs
-    if current_user.role == UserRole.CANDIDATE:
-        query["status"] = JobStatus.OPEN
+    # Get total count
+    total = await db.jobs.count_documents(query)
     
-    # If user is a recruiter, only show their jobs
-    if current_user.role == UserRole.RECRUITER:
-        query["recruiter_id"] = current_user.id
-    
-    skip = (search.page - 1) * search.limit if search else 0
-    limit = search.limit if search else 10
-    
+    # Get jobs
     cursor = db.jobs.find(query).skip(skip).limit(limit)
     jobs = await cursor.to_list(length=limit)
     
-    return [JobResponse(**job) for job in jobs]
+    # Convert ObjectId to string
+    for job in jobs:
+        job["_id"] = str(job["_id"])
+    
+    return {
+        "total": total,
+        "jobs": jobs
+    }
 
-@router.get("/{job_id}", response_model=JobResponse)
-async def get_job(
-    job_id: str,
-    current_user: UserResponse = Depends(get_current_user),
-    db: AsyncIOMotorClient = Depends(get_database) # type: ignore
+@router.get("/{job_id}")
+async def get_job(job_id: str, db: AsyncIOMotorClient = Depends(get_db)):
+    try:
+        job = await db.jobs.find_one({"_id": ObjectId(job_id)})
+        if not job:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Job not found"
+            )
+        job["_id"] = str(job["_id"])
+        return job
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid job ID"
+        )
+
+@router.post("/")
+async def create_job(
+    job: dict,
+    db: AsyncIOMotorClient = Depends(get_db)
 ):
-    job = await db.jobs.find_one({"_id": ObjectId(job_id)})
-    if not job:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Job not found"
-        )
-    
-    # Check permissions
-    if current_user.role == UserRole.RECRUITER and job["recruiter_id"] != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions"
-        )
-    
-    return JobResponse(**job)
+    job["created_at"] = datetime.utcnow()
+    result = await db.jobs.insert_one(job)
+    job["_id"] = str(result.inserted_id)
+    return job
 
-@router.put("/{job_id}", response_model=JobResponse)
+@router.put("/{job_id}")
 async def update_job(
     job_id: str,
-    job_update: JobUpdate,
-    current_user: UserResponse = Depends(get_current_recruiter),
-    db: AsyncIOMotorClient = Depends(get_database) # type: ignore
+    job_update: dict,
+    db: AsyncIOMotorClient = Depends(get_db)
 ):
-    job = await db.jobs.find_one({"_id": ObjectId(job_id)})
-    if not job:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Job not found"
+    try:
+        result = await db.jobs.update_one(
+            {"_id": ObjectId(job_id)},
+            {"$set": job_update}
         )
-    
-    # Check if user owns the job
-    if job["recruiter_id"] != current_user.id:
+        if result.modified_count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Job not found"
+            )
+        return {"message": "Job updated successfully"}
+    except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid job ID"
         )
-    
-    # Update job
-    update_data = job_update.dict(exclude_unset=True)
-    update_data["updated_at"] = datetime.utcnow()
-    
-    # If title or requirements changed, regenerate AI description
-    if "title" in update_data or "requirements" in update_data:
-        title = update_data.get("title", job["title"])
-        requirements = update_data.get("requirements", job["requirements"])
-        update_data["ai_generated_description"] = await generate_jd_with_ai(title, requirements)
-    
-    await db.jobs.update_one(
-        {"_id": ObjectId(job_id)},
-        {"$set": update_data}
-    )
-    
-    updated_job = await db.jobs.find_one({"_id": ObjectId(job_id)})
-    return JobResponse(**updated_job)
 
 @router.delete("/{job_id}")
-async def delete_job(
-    job_id: str,
-    current_user: UserResponse = Depends(get_current_recruiter),
-    db: AsyncIOMotorClient = Depends(get_database) # type: ignore
-):
-    job = await db.jobs.find_one({"_id": ObjectId(job_id)})
-    if not job:
+async def delete_job(job_id: str, db: AsyncIOMotorClient = Depends(get_db)):
+    try:
+        result = await db.jobs.delete_one({"_id": ObjectId(job_id)})
+        if result.deleted_count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Job not found"
+            )
+        return {"message": "Job deleted successfully"}
+    except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Job not found"
-        )
-    
-    # Check if user owns the job
-    if job["recruiter_id"] != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions"
-        )
-    
-    await db.jobs.delete_one({"_id": ObjectId(job_id)})
-    return {"message": "Job deleted successfully"} 
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid job ID"
+        ) 

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -22,9 +22,9 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 # JWT configuration
-SECRET_KEY = os.getenv("JWT_SECRET_KEY")
-ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 # Database dependency
 async def get_database():
@@ -99,54 +99,91 @@ async def get_current_recruiter(
     return current_user
 
 # Routes
-@router.post("/register", response_model=UserResponse)
+@router.post("/register")
 async def register(
-    user: UserCreate,
-    db: AsyncIOMotorClient = Depends(get_database) # type: ignore
+    full_name: str = Form(...),
+    email: str = Form(...),
+    password: str = Form(...),
+    resume: UploadFile = File(...),
+    db: AsyncIOMotorClient = Depends(get_database)
 ):
     # Check if user already exists
-    if await db.users.find_one({"email": user.email}):
+    if await db.users.find_one({"email": email}):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered"
         )
     
-    # Create new user
-    user_dict = user.dict()
-    user_dict["hashed_password"] = get_password_hash(user_dict.pop("password"))
-    user_dict["created_at"] = datetime.utcnow()
+    # Save resume file
+    resume_path = f"uploads/resumes/{email}_{resume.filename}"
+    os.makedirs("uploads/resumes", exist_ok=True)
+    with open(resume_path, "wb") as buffer:
+        content = await resume.read()
+        buffer.write(content)
     
-    result = await db.users.insert_one(user_dict)
-    user_dict["_id"] = result.inserted_id
+    # Create user
+    user = {
+        "full_name": full_name,
+        "email": email,
+        "hashed_password": pwd_context.hash(password),
+        "role": "candidate",
+        "resume_path": resume_path,
+        "created_at": datetime.utcnow()
+    }
     
-    return UserResponse(**user_dict)
+    result = await db.users.insert_one(user)
+    user["_id"] = str(result.inserted_id)
+    
+    # Create access token
+    access_token = create_access_token(
+        data={"sub": user["email"], "role": user["role"]},
+        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
+    
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": {
+            "id": user["_id"],
+            "email": user["email"],
+            "full_name": user["full_name"],
+            "role": user["role"]
+        }
+    }
 
-@router.post("/token", response_model=Token)
+@router.post("/login")
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    db: AsyncIOMotorClient = Depends(get_database) # type: ignore
+    db: AsyncIOMotorClient = Depends(get_database)
 ):
     user = await db.users.find_one({"email": form_data.username})
-    if not user or not verify_password(form_data.password, user["hashed_password"]):
+    if not user or not pwd_context.verify(form_data.password, user["hashed_password"]):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    # Update last login
-    await db.users.update_one(
-        {"_id": user["_id"]},
-        {"$set": {"last_login": datetime.utcnow()}}
-    )
-    
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user["email"], "role": user["role"]},
-        expires_delta=access_token_expires
+        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
     
-    return Token(access_token=access_token)
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": {
+            "id": str(user["_id"]),
+            "email": user["email"],
+            "full_name": user["full_name"],
+            "role": user["role"]
+        }
+    }
+
+@router.post("/logout")
+async def logout():
+    # In a stateless JWT setup, the client handles logout by removing the token
+    return {"message": "Successfully logged out"}
 
 @router.post("/reset-password")
 async def reset_password(
