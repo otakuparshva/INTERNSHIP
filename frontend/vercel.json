@@ -38,7 +38,7 @@
     }
   ],
   "env": {
-    "REACT_APP_API_URL": "https://recruitment-app-backend.onrender.com",
+    "REACT_APP_API_URL": "https://recruitment-app-backend.onrender.com/api",
     "REACT_APP_AWS_REGION": "ap-south-1",
     "REACT_APP_AWS_BUCKET_NAME": "resume.selector.bucket",
     "REACT_APP_NAME": "AI Recruitment System",
