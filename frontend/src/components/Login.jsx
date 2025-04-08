@@ -30,7 +30,7 @@ const Login = () => {
       localStorage.setItem('token', data.access_token);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'An error occurred');
     }
   };
 
@@ -79,7 +79,9 @@ const Login = () => {
           </div>
 
           {error && (
-            <div className="text-red-600 text-sm text-center">{error}</div>
+            <div className="text-red-600 text-sm text-center" role="alert">
+              {error}
+            </div>
           )}
 
           <div>

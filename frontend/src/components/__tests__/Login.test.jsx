@@ -4,6 +4,8 @@ import { BrowserRouter } from 'react-router-dom';
 import Login from '../Login';
 
 describe('Login Component', () => {
+  const mockFetch = global.fetch;
+
   const renderLogin = () => {
     render(
       <BrowserRouter>
@@ -20,12 +22,10 @@ describe('Login Component', () => {
   });
 
   test('handles successful login', async () => {
-    global.fetch.mockImplementationOnce(() =>
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve({ access_token: 'fake-token', token_type: 'bearer' }),
-      })
-    );
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ access_token: 'fake-token', token_type: 'bearer' }),
+    });
 
     renderLogin();
     
@@ -44,12 +44,10 @@ describe('Login Component', () => {
   });
 
   test('handles login error', async () => {
-    global.fetch.mockImplementationOnce(() =>
-      Promise.resolve({
-        ok: false,
-        json: () => Promise.resolve({ detail: 'Invalid credentials' }),
-      })
-    );
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      json: () => Promise.resolve({ detail: 'Invalid credentials' }),
+    });
 
     renderLogin();
     
