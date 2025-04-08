@@ -6,13 +6,20 @@ const __dirname = path.dirname(__filename);
 
 export default {
   webpack: {
+    alias: {
+      '@': path.resolve(__dirname, 'src'),
+    },
     configure: (webpackConfig) => {
-      // Add the alias configuration
-      webpackConfig.resolve.alias = {
-        ...webpackConfig.resolve.alias,
-        '@': path.resolve(__dirname, 'src'),
+      return {
+        ...webpackConfig,
+        resolve: {
+          ...webpackConfig.resolve,
+          alias: {
+            ...webpackConfig.resolve.alias,
+            '@': path.resolve(__dirname, 'src'),
+          },
+        },
       };
-      return webpackConfig;
     },
   },
 }; 
