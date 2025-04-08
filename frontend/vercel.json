@@ -4,47 +4,55 @@
     {
       "src": "package.json",
       "use": "@vercel/static-build",
-      "config": { "distDir": "build" }
+      "config": { 
+        "distDir": "build",
+        "buildCommand": "npm run build"
+      }
     }
   ],
   "routes": [
     {
+      "handle": "filesystem"
+    },
+    {
       "src": "/static/(.*)",
-      "dest": "/static/$1"
+      "dest": "/static/$1",
+      "headers": { "cache-control": "public, max-age=31536000, immutable" }
     },
     {
       "src": "/favicon.ico",
-      "dest": "/favicon.ico"
+      "dest": "/favicon.ico",
+      "headers": { "cache-control": "public, max-age=31536000, immutable" }
     },
     {
       "src": "/manifest.json",
-      "dest": "/manifest.json"
+      "dest": "/manifest.json",
+      "headers": { "cache-control": "public, max-age=31536000, immutable" }
     },
     {
       "src": "/logo192.png",
-      "dest": "/logo192.png"
+      "dest": "/logo192.png",
+      "headers": { "cache-control": "public, max-age=31536000, immutable" }
     },
     {
       "src": "/logo512.png",
-      "dest": "/logo512.png"
+      "dest": "/logo512.png",
+      "headers": { "cache-control": "public, max-age=31536000, immutable" }
     },
     {
       "src": "/robots.txt",
-      "dest": "/robots.txt"
+      "dest": "/robots.txt",
+      "headers": { "cache-control": "public, max-age=31536000, immutable" }
     },
     {
       "src": "/(.*)",
-      "dest": "/index.html"
+      "dest": "/index.html",
+      "status": 200
     }
   ],
   "env": {
     "REACT_APP_API_URL": "https://recruitment-app-backend.onrender.com/api",
     "REACT_APP_AWS_REGION": "ap-south-1",
-    "REACT_APP_AWS_BUCKET_NAME": "resume.selector.bucket",
-    "REACT_APP_NAME": "AI Recruitment System",
-    "REACT_APP_VERSION": "1.0.0",
-    "REACT_APP_ENVIRONMENT": "development",
-    "REACT_APP_ENABLE_ANALYTICS": "false",
-    "REACT_APP_ENABLE_NOTIFICATIONS": "true"
+    "REACT_APP_AWS_BUCKET_NAME": "resume.selector.bucket"
   }
 } 
