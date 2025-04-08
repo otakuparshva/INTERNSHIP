@@ -1,6 +1,35 @@
 {
   "version": 2,
-  "buildCommand": "cd frontend && npm install ; npm run build",
+  "buildCommand": "cd frontend ; npm install ; npm run build",
   "outputDirectory": "frontend/build",
-  "framework": "create-react-app"
+  "framework": "create-react-app",
+  "installCommand": "cd frontend ; npm install",
+  "builds": [
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/static/(.*)",
+      "headers": { "cache-control": "public, max-age=31536000, immutable" },
+      "dest": "/static/$1"
+    },
+    {
+      "src": "/(.*).(ico|png|jpg|jpeg|gif|svg|json|txt)",
+      "headers": { "cache-control": "public, max-age=31536000, immutable" },
+      "dest": "/$1.$2"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/.*",
+      "dest": "/index.html"
+    }
+  ]
 } 
