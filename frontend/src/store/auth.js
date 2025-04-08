@@ -1,14 +1,14 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import axios from '../api/axios';
+import api from '../api/axios';
 import { jwtDecode } from 'jwt-decode';
 
 const useAuthStore = create(
   persist(
     (set, get) => ({
       user: null,
-      token: null,
-      isAuthenticated: false,
+      token: localStorage.getItem('token'),
+      isAuthenticated: !!localStorage.getItem('token'),
       isLoading: false,
       error: null,
 
@@ -16,8 +16,9 @@ const useAuthStore = create(
       login: async (email, password) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await axios.post('/auth/login', { email, password });
-          const { user, token } = response.data;
+          const response = await api.post('/auth/login', { email, password });
+          const { token, user } = response.data;
+          localStorage.setItem('token', token);
           set({ user, token, isAuthenticated: true, isLoading: false });
           return true;
         } catch (error) {
@@ -30,8 +31,9 @@ const useAuthStore = create(
       register: async (userData) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await axios.post('/auth/register', userData);
-          const { user, token } = response.data;
+          const response = await api.post('/auth/register', userData);
+          const { token, user } = response.data;
+          localStorage.setItem('token', token);
           set({ user, token, isAuthenticated: true, isLoading: false });
           return true;
         } catch (error) {
@@ -42,7 +44,8 @@ const useAuthStore = create(
 
       // Logout
       logout: () => {
-        set({ user: null, token: null, isAuthenticated: false, error: null });
+        localStorage.removeItem('token');
+        set({ user: null, token: null, isAuthenticated: false });
       },
 
       // Check if token is expired
@@ -60,7 +63,7 @@ const useAuthStore = create(
           }
 
           // Set token in axios headers
-          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           return true;
         } catch (error) {
           get().logout();
@@ -72,7 +75,7 @@ const useAuthStore = create(
       updateProfile: async (userData) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await axios.put('/api/auth/profile', userData);
+          const response = await api.put('/api/auth/profile', userData);
           set({
             user: { ...get().user, ...response.data },
             isLoading: false,
@@ -91,7 +94,7 @@ const useAuthStore = create(
       resetPassword: async (email) => {
         set({ isLoading: true, error: null });
         try {
-          await axios.post('/api/auth/reset-password', { email });
+          await api.post('/api/auth/reset-password', { email });
           set({ isLoading: false });
           return true;
         } catch (error) {
@@ -107,7 +110,7 @@ const useAuthStore = create(
       updatePassword: async (currentPassword, newPassword) => {
         set({ isLoading: true, error: null });
         try {
-          await axios.put('/api/auth/update-password', {
+          await api.put('/api/auth/update-password', {
             current_password: currentPassword,
             new_password: newPassword,
           });
