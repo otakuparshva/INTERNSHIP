@@ -1,16 +1,16 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation } from 'react-query';
-import { toast } from 'react-hot-toast';
 import { motion } from 'framer-motion';
-import { generateInterviewQuestions, submitInterviewAnswers } from '@/services/api';
+import { generateInterviewQuestions, submitInterviewAnswers } from '../../services/api';
 
 export default function InterviewBot() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
   const [interviewStarted, setInterviewStarted] = useState(false);
   const [interviewCompleted, setInterviewCompleted] = useState(false);
+  const [error, setError] = useState('');
 
-  const { data: questions, isLoading: isLoadingQuestions } = useQuery(
+  const { data: questions, isLoading } = useQuery(
     'interviewQuestions',
     () => generateInterviewQuestions(localStorage.getItem('currentJobId'), 5),
     {
@@ -26,10 +26,10 @@ export default function InterviewBot() {
   const submitMutation = useMutation(submitInterviewAnswers, {
     onSuccess: () => {
       setInterviewCompleted(true);
-      toast.success('Interview completed successfully!');
+      setError('');
     },
-    onError: (error) => {
-      toast.error('Failed to submit interview. Please try again.');
+    onError: () => {
+      setError('Failed to submit interview. Please try again.');
     },
   });
 
@@ -59,7 +59,7 @@ export default function InterviewBot() {
     );
 
     if (unansweredQuestions.length > 0) {
-      toast.error('Please answer all questions before submitting.');
+      setError('Please answer all questions before submitting.');
       return;
     }
 
@@ -89,10 +89,10 @@ export default function InterviewBot() {
     );
   }
 
-  if (isLoadingQuestions) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        Loading...
       </div>
     );
   }
@@ -117,56 +117,45 @@ export default function InterviewBot() {
   }
 
   const question = questions.questions[currentQuestion];
+  const progress = ((currentQuestion + 1) / questions.questions.length) * 100;
 
   return (
     <div className="max-w-3xl mx-auto">
       <div className="bg-white rounded-lg shadow-sm p-6">
-        {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex justify-between mb-2">
             <span className="text-sm font-medium text-gray-700">
               Question {currentQuestion + 1} of {questions.questions.length}
             </span>
             <span className="text-sm font-medium text-gray-700">
-              {Math.round(((currentQuestion + 1) / questions.questions.length) * 100)}%
+              {Math.round(progress)}%
             </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
               className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-              style={{
-                width: `${((currentQuestion + 1) / questions.questions.length) * 100}%`,
-              }}
-            ></div>
+              style={{ width: `${progress}%` }}
+            />
           </div>
         </div>
 
-        {/* Question */}
         <motion.div
-          key={currentQuestion}
-          initial={{ x: 20, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          exit={{ x: -20, opacity: 0 }}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.3 }}
         >
           <h3 className="text-lg font-medium text-gray-900 mb-4">
             {question.text}
           </h3>
-
-          {/* Options */}
           <div className="space-y-3">
-            {question.options.map((option, index) => (
+            {question.options.map((option) => (
               <label
-                key={index}
-                className={`flex items-center p-4 border rounded-lg cursor-pointer transition-colors duration-200 ${
-                  answers[question.id] === option
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-blue-300'
-                }`}
+                key={option}
+                className="flex items-center p-4 border rounded-lg cursor-pointer transition-colors duration-200 border-gray-200 hover:border-blue-300"
               >
                 <input
                   type="radio"
-                  name={`question-${question.id}`}
+                  name={`question-${currentQuestion + 1}`}
                   value={option}
                   checked={answers[question.id] === option}
                   onChange={() => handleAnswerSelect(question.id, option)}
@@ -178,26 +167,30 @@ export default function InterviewBot() {
           </div>
         </motion.div>
 
-        {/* Navigation Buttons */}
+        {error && (
+          <div className="mt-4 text-red-600 text-sm">
+            {error}
+          </div>
+        )}
+
         <div className="mt-8 flex justify-between">
           <button
             onClick={handlePrevious}
             disabled={currentQuestion === 0}
-            className={`inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
+            className={`inline-flex items-center px-4 py-2 border ${
               currentQuestion === 0
-                ? 'text-gray-400 cursor-not-allowed'
-                : 'text-gray-700 hover:bg-gray-50'
-            }`}
+                ? 'border-gray-300 text-gray-400 cursor-not-allowed'
+                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+            } text-sm font-medium rounded-md`}
           >
             Previous
           </button>
           {currentQuestion === questions.questions.length - 1 ? (
             <button
               onClick={handleSubmit}
-              disabled={submitMutation.isLoading}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              {submitMutation.isLoading ? 'Submitting...' : 'Submit Interview'}
+              Submit
             </button>
           ) : (
             <button

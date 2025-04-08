@@ -1,8 +1,10 @@
 import '@testing-library/jest-dom';
-import { server } from './mocks/server';
 
 // Mock fetch globally
-global.fetch = jest.fn();
+global.fetch = jest.fn(() => Promise.resolve({
+  ok: true,
+  json: () => Promise.resolve({}),
+}));
 
 // Setup localStorage mock
 const localStorageMock = {
@@ -13,11 +15,8 @@ const localStorageMock = {
 };
 global.localStorage = localStorageMock;
 
-beforeAll(() => server.listen());
+// Clean up after each test
 afterEach(() => {
-  server.resetHandlers();
-  mockFetch.mockReset();
   jest.clearAllMocks();
   localStorage.clear();
-});
-afterAll(() => server.close()); 
+}); 

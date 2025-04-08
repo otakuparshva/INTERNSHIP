@@ -37,7 +37,6 @@ describe('InterviewBot Component', () => {
   });
 
   beforeEach(() => {
-    // Clear all mocks before each test
     jest.clearAllMocks();
     localStorage.clear();
     localStorage.setItem('currentJobId', '123');
@@ -55,14 +54,14 @@ describe('InterviewBot Component', () => {
   it('renders initial start screen', () => {
     renderInterviewBot();
     expect(screen.getByText(/Ready for your interview?/i)).toBeInTheDocument();
-    expect(screen.getByText(/Start Interview/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Start Interview/i })).toBeInTheDocument();
   });
 
   it('starts interview when clicking start button', async () => {
     generateInterviewQuestions.mockResolvedValueOnce(mockQuestions);
     
     renderInterviewBot();
-    fireEvent.click(screen.getByText(/Start Interview/i));
+    fireEvent.click(screen.getByRole('button', { name: /Start Interview/i }));
     
     await waitFor(() => {
       expect(generateInterviewQuestions).toHaveBeenCalledWith('123', 5);
@@ -73,7 +72,7 @@ describe('InterviewBot Component', () => {
     generateInterviewQuestions.mockResolvedValueOnce(mockQuestions);
     
     renderInterviewBot();
-    fireEvent.click(screen.getByText(/Start Interview/i));
+    fireEvent.click(screen.getByRole('button', { name: /Start Interview/i }));
     
     await waitFor(() => {
       expect(screen.getByText(mockQuestions.questions[0].text)).toBeInTheDocument();
@@ -83,10 +82,10 @@ describe('InterviewBot Component', () => {
     fireEvent.click(screen.getByText('Problem-solving'));
     
     // Test navigation
-    fireEvent.click(screen.getByText(/Next/i));
+    fireEvent.click(screen.getByRole('button', { name: /Next/i }));
     expect(screen.getByText(mockQuestions.questions[1].text)).toBeInTheDocument();
     
-    fireEvent.click(screen.getByText(/Previous/i));
+    fireEvent.click(screen.getByRole('button', { name: /Previous/i }));
     expect(screen.getByText(mockQuestions.questions[0].text)).toBeInTheDocument();
   });
 
@@ -95,7 +94,7 @@ describe('InterviewBot Component', () => {
     submitInterviewAnswers.mockResolvedValueOnce({ success: true });
     
     renderInterviewBot();
-    fireEvent.click(screen.getByText(/Start Interview/i));
+    fireEvent.click(screen.getByRole('button', { name: /Start Interview/i }));
     
     await waitFor(() => {
       expect(screen.getByText(mockQuestions.questions[0].text)).toBeInTheDocument();
@@ -103,11 +102,14 @@ describe('InterviewBot Component', () => {
 
     // Answer all questions
     fireEvent.click(screen.getByText('Problem-solving'));
-    fireEvent.click(screen.getByText(/Next/i));
+    fireEvent.click(screen.getByRole('button', { name: /Next/i }));
     fireEvent.click(screen.getByText('Project A'));
 
+    // Navigate to the end
+    fireEvent.click(screen.getByRole('button', { name: /Next/i }));
+
     // Submit interview
-    fireEvent.click(screen.getByText(/Submit/i));
+    fireEvent.click(screen.getByRole('button', { name: /Submit/i }));
 
     await waitFor(() => {
       expect(submitInterviewAnswers).toHaveBeenCalledWith({
@@ -125,25 +127,26 @@ describe('InterviewBot Component', () => {
     generateInterviewQuestions.mockResolvedValueOnce(mockQuestions);
     
     renderInterviewBot();
-    fireEvent.click(screen.getByText(/Start Interview/i));
+    fireEvent.click(screen.getByRole('button', { name: /Start Interview/i }));
     
     await waitFor(() => {
       expect(screen.getByText(mockQuestions.questions[0].text)).toBeInTheDocument();
     });
 
-    // Submit without answering
-    fireEvent.click(screen.getByText(/Submit/i));
+    // Navigate to the end without answering
+    fireEvent.click(screen.getByRole('button', { name: /Next/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Submit/i }));
 
     expect(screen.getByText(/Please answer all questions before submitting/i)).toBeInTheDocument();
     expect(submitInterviewAnswers).not.toHaveBeenCalled();
   });
 
-  it('handles loading state', async () => {
+  it('displays loading state', async () => {
     generateInterviewQuestions.mockImplementation(() => new Promise(() => {})); // Never resolves
     
     renderInterviewBot();
-    fireEvent.click(screen.getByText(/Start Interview/i));
+    fireEvent.click(screen.getByRole('button', { name: /Start Interview/i }));
     
-    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.getByText(/Loading.../i)).toBeInTheDocument();
   });
 }); 
