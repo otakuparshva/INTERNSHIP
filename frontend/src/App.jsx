@@ -18,6 +18,8 @@ import CandidateDashboard from './pages/candidate/Dashboard';
 import RecruiterDashboard from './pages/recruiter/Dashboard';
 
 function App() {
+  console.log(process.env.NEXT_PUBLIC_API_URL);
+
   return (
     <Router>
       <Toaster position="top-right" />
