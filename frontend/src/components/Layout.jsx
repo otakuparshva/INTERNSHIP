@@ -18,15 +18,15 @@ const Layout = () => {
   const { user, isAuthenticated, logout } = useAuthStore();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <Disclosure as="nav" className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200">
+      <Disclosure as="nav" className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-200">
         {({ open }) => (
           <>
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
               <div className="flex h-16 justify-between">
                 <div className="flex">
                   <div className="flex flex-shrink-0 items-center">
-                    <Link to="/" className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                    <Link to="/" className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent hover:opacity-80 transition-opacity duration-200">
                       AI Recruitment
                     </Link>
                   </div>
@@ -39,7 +39,7 @@ const Layout = () => {
                           location.pathname === item.href
                             ? 'border-blue-500 text-gray-900'
                             : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700',
-                          'inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium transition-colors duration-200'
+                          'inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium transition-all duration-200 hover:scale-105'
                         )}
                       >
                         {item.name}
@@ -51,9 +51,9 @@ const Layout = () => {
                   {isAuthenticated ? (
                     <Menu as="div" className="relative ml-3">
                       <div>
-                        <Menu.Button className="flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 hover:shadow-md">
+                        <Menu.Button className="flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 hover:shadow-md hover:scale-105">
                           <span className="sr-only">Open user menu</span>
-                          <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center">
+                          <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 flex items-center justify-center">
                             <span className="text-white font-medium">
                               {user?.email?.[0]?.toUpperCase()}
                             </span>
@@ -103,13 +103,13 @@ const Layout = () => {
                     <div className="space-x-4">
                       <Link
                         to="/login"
-                        className="inline-flex items-center rounded-md bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:from-blue-700 hover:to-indigo-700 transition-all duration-200"
+                        className="inline-flex items-center rounded-md bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 transition-all duration-200 hover:scale-105"
                       >
                         Sign in
                       </Link>
                       <Link
                         to="/register"
-                        className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-all duration-200"
+                        className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-all duration-200 hover:scale-105"
                       >
                         Register
                       </Link>
@@ -151,7 +151,7 @@ const Layout = () => {
                 <div className="border-t border-gray-200 pb-3 pt-4">
                   <div className="flex items-center px-4">
                     <div className="flex-shrink-0">
-                      <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center">
+                      <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 flex items-center justify-center">
                         <span className="text-white font-medium">
                           {user?.email?.[0]?.toUpperCase()}
                         </span>
