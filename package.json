@@ -10,5 +10,9 @@
   },
   "dependencies": {
     "concurrently": "^8.2.2"
+  },
+  "devDependencies": {
+    "@pmmmwh/react-refresh-webpack-plugin": "^0.5.16",
+    "react-refresh": "^0.17.0"
   }
-} 
+}
