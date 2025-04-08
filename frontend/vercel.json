@@ -13,7 +13,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/$1"
+      "dest": "https://ai-recruitment-backend.onrender.com/api/$1"
     },
     {
       "src": "/static/(.*)",
@@ -34,6 +34,8 @@
   ],
   "env": {
     "NODE_ENV": "production",
-    "CI": "false"
+    "CI": "false",
+    "REACT_APP_API_URL": "https://ai-recruitment-backend.onrender.com/api",
+    "NEXT_PUBLIC_API_URL": "https://ai-recruitment-backend.onrender.com/api"
   }
 } 

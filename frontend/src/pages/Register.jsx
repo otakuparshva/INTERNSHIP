@@ -2,76 +2,95 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
+import { useDropzone } from 'react-dropzone';
 import { useAuthStore } from '@/store/auth';
 import toast from 'react-hot-toast';
 
-export default function Register() {
+const Register = () => {
   const navigate = useNavigate();
   const { register: registerUser } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
+  const [resume, setResume] = useState(null);
 
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
+    watch,
   } = useForm();
 
   const password = watch('password');
 
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    accept: {
+      'application/pdf': ['.pdf'],
+      'application/msword': ['.doc'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': [
+        '.docx',
+      ],
+    },
+    maxSize: 5242880, // 5MB
+    maxFiles: 1,
+    onDrop: (acceptedFiles) => {
+      setResume(acceptedFiles[0]);
+    },
+    onDropRejected: (fileRejections) => {
+      const error = fileRejections[0]?.errors[0]?.message;
+      toast.error(error || 'Invalid file');
+    },
+  });
+
   const onSubmit = async (data) => {
+    if (!resume) {
+      toast.error('Please upload your resume');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const success = await registerUser({
-        email: data.email,
-        password: data.password,
-        full_name: data.fullName,
-        role: data.role,
-      });
+      const formData = new FormData();
+      formData.append('email', data.email);
+      formData.append('password', data.password);
+      formData.append('full_name', data.fullName);
+      formData.append('resume', resume);
 
+      const success = await registerUser(formData);
       if (success) {
         toast.success('Registration successful! Please sign in.');
         navigate('/login');
       }
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Registration failed');
+      toast.error('Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="flex min-h-[80vh] items-center justify-center py-12 px-4 sm:px-6 lg:px-8"
-    >
-      <div className="w-full max-w-md space-y-8">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gray-50">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow"
+      >
         <div>
-          <img
-            className="mx-auto h-12 w-auto"
-            src="/logo.svg"
-            alt="AI Recruitment"
-          />
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Create your account
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{' '}
             <Link
               to="/login"
-              className="font-medium text-primary-600 hover:text-primary-500"
+              className="font-medium text-blue-600 hover:text-blue-500"
             >
-              sign in to your account
+              sign in to your existing account
             </Link>
           </p>
         </div>
-
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
-          <div className="space-y-4 rounded-md">
+          <div className="rounded-md shadow-sm -space-y-px">
             <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="fullName" className="sr-only">
                 Full Name
               </label>
               <input
@@ -84,10 +103,10 @@ export default function Register() {
                     message: 'Name must be at least 2 characters',
                   },
                 })}
-                className={`mt-1 block w-full rounded-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 ${
-                  errors.fullName ? 'ring-red-500' : ''
-                }`}
-                placeholder="John Doe"
+                className={`appearance-none rounded-none relative block w-full px-3 py-2 border ${
+                  errors.fullName ? 'border-red-300' : 'border-gray-300'
+                } placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
+                placeholder="Full Name"
               />
               {errors.fullName && (
                 <p className="mt-1 text-sm text-red-600">
@@ -95,9 +114,8 @@ export default function Register() {
                 </p>
               )}
             </div>
-
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="sr-only">
                 Email address
               </label>
               <input
@@ -110,10 +128,10 @@ export default function Register() {
                     message: 'Invalid email address',
                   },
                 })}
-                className={`mt-1 block w-full rounded-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 ${
-                  errors.email ? 'ring-red-500' : ''
-                }`}
-                placeholder="you@example.com"
+                className={`appearance-none rounded-none relative block w-full px-3 py-2 border ${
+                  errors.email ? 'border-red-300' : 'border-gray-300'
+                } placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
+                placeholder="Email address"
               />
               {errors.email && (
                 <p className="mt-1 text-sm text-red-600">
@@ -121,31 +139,8 @@ export default function Register() {
                 </p>
               )}
             </div>
-
             <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700">
-                Role
-              </label>
-              <select
-                id="role"
-                {...register('role', {
-                  required: 'Please select a role',
-                })}
-                className={`mt-1 block w-full rounded-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 ${
-                  errors.role ? 'ring-red-500' : ''
-                }`}
-              >
-                <option value="">Select a role</option>
-                <option value="candidate">Candidate</option>
-                <option value="recruiter">Recruiter</option>
-              </select>
-              {errors.role && (
-                <p className="mt-1 text-sm text-red-600">{errors.role.message}</p>
-              )}
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="sr-only">
                 Password
               </label>
               <input
@@ -157,16 +152,11 @@ export default function Register() {
                     value: 8,
                     message: 'Password must be at least 8 characters',
                   },
-                  pattern: {
-                    value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-                    message:
-                      'Password must contain at least one uppercase letter, one lowercase letter, one number and one special character',
-                  },
                 })}
-                className={`mt-1 block w-full rounded-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 ${
-                  errors.password ? 'ring-red-500' : ''
-                }`}
-                placeholder="••••••••"
+                className={`appearance-none rounded-none relative block w-full px-3 py-2 border ${
+                  errors.password ? 'border-red-300' : 'border-gray-300'
+                } placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
+                placeholder="Password"
               />
               {errors.password && (
                 <p className="mt-1 text-sm text-red-600">
@@ -174,12 +164,8 @@ export default function Register() {
                 </p>
               )}
             </div>
-
             <div>
-              <label
-                htmlFor="confirmPassword"
-                className="block text-sm font-medium text-gray-700"
-              >
+              <label htmlFor="confirmPassword" className="sr-only">
                 Confirm Password
               </label>
               <input
@@ -190,10 +176,10 @@ export default function Register() {
                   validate: (value) =>
                     value === password || 'Passwords do not match',
                 })}
-                className={`mt-1 block w-full rounded-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6 ${
-                  errors.confirmPassword ? 'ring-red-500' : ''
-                }`}
-                placeholder="••••••••"
+                className={`appearance-none rounded-none relative block w-full px-3 py-2 border ${
+                  errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
+                } placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
+                placeholder="Confirm Password"
               />
               {errors.confirmPassword && (
                 <p className="mt-1 text-sm text-red-600">
@@ -204,10 +190,53 @@ export default function Register() {
           </div>
 
           <div>
+            <div
+              {...getRootProps()}
+              className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md ${
+                isDragActive
+                  ? 'border-blue-400 bg-blue-50'
+                  : 'border-gray-300 hover:border-gray-400'
+              }`}
+            >
+              <div className="space-y-1 text-center">
+                <input {...getInputProps()} />
+                <svg
+                  className="mx-auto h-12 w-12 text-gray-400"
+                  stroke="currentColor"
+                  fill="none"
+                  viewBox="0 0 48 48"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <div className="flex text-sm text-gray-600">
+                  <label className="relative cursor-pointer rounded-md bg-white font-medium text-blue-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2 hover:text-blue-500">
+                    <span>Upload your resume</span>
+                  </label>
+                  <p className="pl-1">or drag and drop</p>
+                </div>
+                <p className="text-xs text-gray-500">
+                  PDF, DOC, DOCX up to 5MB
+                </p>
+              </div>
+            </div>
+            {resume && (
+              <p className="mt-2 text-sm text-gray-600">
+                Selected file: {resume.name}
+              </p>
+            )}
+          </div>
+
+          <div>
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative flex w-full justify-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <svg
@@ -236,26 +265,9 @@ export default function Register() {
             </button>
           </div>
         </form>
-
-        <div className="mt-6">
-          <p className="text-center text-sm text-gray-600">
-            By registering, you agree to our{' '}
-            <Link
-              to="/terms"
-              className="font-medium text-primary-600 hover:text-primary-500"
-            >
-              Terms of Service
-            </Link>{' '}
-            and{' '}
-            <Link
-              to="/privacy"
-              className="font-medium text-primary-600 hover:text-primary-500"
-            >
-              Privacy Policy
-            </Link>
-          </p>
-        </div>
-      </div>
-    </motion.div>
+      </motion.div>
+    </div>
   );
-} 
+};
+
+export default Register; 

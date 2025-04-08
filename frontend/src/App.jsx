@@ -1,70 +1,65 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { QueryClient, QueryClientProvider } from 'react-query';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 
-// Public Pages
+// Pages
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import Jobs from './pages/Jobs';
-import About from './pages/About';
-import Contact from './pages/Contact';
+import CandidateDashboard from './pages/CandidateDashboard';
+import RecruiterDashboard from './pages/RecruiterDashboard';
+import AdminDashboard from './pages/AdminDashboard';
+import JobPosting from './pages/JobPosting';
+import JobListings from './pages/JobListings';
+import InterviewBot from './pages/InterviewBot';
+import ResumeViewer from './pages/ResumeViewer';
+import NotFound from './pages/NotFound';
 
-// Protected Pages
-import AdminDashboard from './pages/admin/Dashboard';
-import CandidateDashboard from './pages/candidate/Dashboard';
-import RecruiterDashboard from './pages/recruiter/Dashboard';
+// Create a client
+const queryClient = new QueryClient();
 
 function App() {
-  console.log(process.env.NEXT_PUBLIC_API_URL);
-
   return (
-    <Router>
-      <Toaster position="top-right" />
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="login" element={<Login />} />
-          <Route path="register" element={<Register />} />
-          <Route path="jobs" element={<Jobs />} />
-          <Route path="about" element={<About />} />
-          <Route path="contact" element={<Contact />} />
-        </Route>
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <Toaster position="top-right" />
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="login" element={<Login />} />
+            <Route path="register" element={<Register />} />
+            <Route path="jobs" element={<JobListings />} />
+            
+            {/* Protected Routes */}
+            <Route path="candidate" element={<ProtectedRoute role="candidate" />}>
+              <Route index element={<CandidateDashboard />} />
+              <Route path="resume" element={<ResumeViewer />} />
+              <Route path="interview/:jobId" element={<InterviewBot />} />
+            </Route>
 
-        {/* Protected Admin Routes */}
-        <Route
-          path="/admin/*"
-          element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <AdminDashboard />
-            </ProtectedRoute>
-          }
-        />
+            <Route path="recruiter" element={<ProtectedRoute role="recruiter" />}>
+              <Route index element={<RecruiterDashboard />} />
+              <Route path="post-job" element={<JobPosting />} />
+              <Route path="applications" element={<RecruiterDashboard />} />
+              <Route path="interviews" element={<RecruiterDashboard />} />
+            </Route>
 
-        {/* Protected Candidate Routes */}
-        <Route
-          path="/candidate/*"
-          element={
-            <ProtectedRoute allowedRoles={['candidate']}>
-              <CandidateDashboard />
-            </ProtectedRoute>
-          }
-        />
+            <Route path="admin" element={<ProtectedRoute role="admin" />}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="users" element={<AdminDashboard />} />
+              <Route path="jobs" element={<AdminDashboard />} />
+              <Route path="logs" element={<AdminDashboard />} />
+            </Route>
 
-        {/* Protected Recruiter Routes */}
-        <Route
-          path="/recruiter/*"
-          element={
-            <ProtectedRoute allowedRoles={['recruiter']}>
-              <RecruiterDashboard />
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
-    </Router>
+            {/* 404 Route */}
+            <Route path="*" element={<NotFound />} />
+          </Route>
+        </Routes>
+      </Router>
+    </QueryClientProvider>
   );
 }
 

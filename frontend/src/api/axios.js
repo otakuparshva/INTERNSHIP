@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 
 // Create axios instance
 const instance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api',
+  baseURL: process.env.REACT_APP_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -13,11 +13,19 @@ const instance = axios.create({
 instance.interceptors.request.use(
   (config) => {
     // Get token from localStorage
-    const token = localStorage.getItem('token');
-
-    // If token exists, add to headers
+    const token = localStorage.getItem('auth-storage');
+    
+    // If token exists, parse it and add to headers
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      try {
+        const { state } = JSON.parse(token);
+        if (state.token) {
+          config.headers.Authorization = `Bearer ${state.token}`;
+        }
+      } catch (error) {
+        console.error('Error parsing auth token:', error);
+        localStorage.removeItem('auth-storage');
+      }
     }
 
     return config;
@@ -47,7 +55,7 @@ instance.interceptors.response.use(
     // Handle token expiration
     if (error.response?.status === 401) {
       // Clear auth storage
-      localStorage.removeItem('token');
+      localStorage.removeItem('auth-storage');
       
       // Redirect to login if not already there
       if (!window.location.pathname.includes('/login')) {
