@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "projectId": "prj_ePBdBQOx8bTk0qTVj0dIZ0ZpptZe",
   "builds": [
     {
       "src": "frontend/package.json",
